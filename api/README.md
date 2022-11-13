@@ -10,5 +10,5 @@ npm i
 
 Then run the server using:
 ```
-node .
+npm start
 ```
