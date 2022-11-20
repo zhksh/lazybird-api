@@ -1,6 +1,15 @@
 services:
+  postgres: 
+    image: postgres:15.1-alpine
+    env_file:
+      - .env
+    ports:
+      - ${POSTGRES_PORT}:5432
+
   api:
-    image: msp-api:latest
+    image: ${IMAGE_NAME}:${IMAGE_VERSION}
+    env_file:
+      - .env
     build: .
     ports:
-      - "6969:6969"
+      - ${API_PORT}:${API_PORT}
