@@ -43,6 +43,8 @@ api
         │   ...
     └─── /storage                   # Data access layer
         │   ...
+    └─── /subscribers               # async event handlers
+        │   ...
 │   .dockerignore
 │   .env                            # Environment variables
 │   .eslintrc.json
@@ -53,3 +55,8 @@ api
 │   tsconfig.json
 │   README.md
 ```
+
+## Error handling
+Event though Javascript/Typescript supports `try`/`catch` style error handling, it is not widely used in this project. Instead, optional error objects are returned from functions that might lead to an error. 
+By doing this, it is always clear which function threw an error without wrapping each individual statement in a `try`/`catch` block. Furthermore, by explicitly returning errors from functions, they are represented in the type system. 
+Typescript does not enforce handling of `throwing` functions, so it is very easy to miss a `try`/`catch block`.

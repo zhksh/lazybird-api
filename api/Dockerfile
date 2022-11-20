@@ -16,4 +16,4 @@ RUN npm install
 COPY --from=builder /api/dist ./dist
 ENV PORT=6969
 EXPOSE 6969
-CMD [ "node", "dist/index.js" ]
+CMD [ "node", "dist/app.js" ]
