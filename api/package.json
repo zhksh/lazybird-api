@@ -6,6 +6,7 @@
   "scripts": {
     "start": "tsc && node dist/index.js",
     "build": "tsc",
+    "docker-build": "docker build -t msp-api:latest .",
     "lint": "eslint . --ext .ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

@@ -1,0 +1,6 @@
+services:
+  api:
+    image: msp-api:latest
+    build: .
+    ports:
+      - "6969:6969"

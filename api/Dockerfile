@@ -5,6 +5,7 @@ COPY package*.json ./
 COPY tsconfig.json ./
 # TODO: Only install typescript here?
 RUN npm install 
+COPY src ./src
 RUN npm run build
 
 # RUN STAGE
