@@ -8,6 +8,7 @@ export interface User {
 
 export async function storeUser(pool: Pool, user: User): Promise<Error | void> {
     try {
+        // TODO: Map 'already exists' error and pass it to the user.
         const client = await pool.connect()
 
         const sql = `INSERT INTO users(id, login, secret) VALUES ($1, $2, $3)`
