@@ -14,7 +14,7 @@ exports.up = pgm => {
             notNull: true,
             unique: true,
         },
-        password: {
+        secret: {
             type: 'text',
             notNull: true,
         },
