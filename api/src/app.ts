@@ -8,7 +8,7 @@ app.use(express.json())
 app.use('/user', userRouter)
 
 app.get('/', (req, res) => {
-    res.send('This server is running :)')
+    res.send('Hi Gruppe 2, server is running :)')
 })
 
 // TODO: Add graceful shutdown with pool.end()?
