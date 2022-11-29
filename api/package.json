@@ -6,7 +6,7 @@
   "scripts": {
     "start": "tsc && node dist/app.js",
     "build": "tsc",
-    "apiDoc": "docker run -it --rm -p 8080:80 -v $(pwd)/swagger/:/usr/share/nginx/html/swagger/ -e SPEC_URL=swagger/swagger.json redocly/redoc",
+    "apiDoc": "docker run -it --rm -p 8080:80 -v $(pwd)/swagger/:/usr/share/nginx/html/swagger/ -e SPEC_URL=swagger/swagger.yml redocly/redoc",
     "docker-build": "docker build -t msp-api:latest .",
     "migrate": "node-pg-migrate",
     "lint": "eslint . --ext .ts",

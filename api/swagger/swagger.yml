@@ -1,0 +1,198 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: MSP - Twitter Clone
+  description: ''
+servers:
+- url: http://localhost:6969/
+paths:
+  /users:
+    post:
+      summary: Sign Up
+      description: Create and store a new user with the given data in the database. Also creates and returns a corresponding JWT used for authorization in subsequent requests. JWT
+      security:
+        - 
+      requestBody:
+        description: User information
+        required: true
+        content:
+          application/json:
+            schema: 
+              allOf:
+                - $ref: '#/components/schemas/Authentication'
+                - $ref: '#/components/schemas/UserDetails'
+      responses:
+        '200':
+          description: 'User was successfully created. Returns a JWT access token that should be set in the Authorization header of subsequent API calls.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessToken'
+        '409':
+          description: 'A user with the same login already exists. Please provide a different user login.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /auth:
+    post:
+      summary: Login 
+      description: Authenticate a user by passing in login credentials. Returns a JWT that can be used in the Authorization Header to authenticate the user in subsequent API calls.
+      security:
+        - 
+      requestBody:
+        description: User information
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Authentication'
+      responses:
+        '200':
+          description: 'User was successfully authorized. Returns a JWT access token that should be set in the Authorization header of subsequent API calls.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessToken'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /users/me:
+    get:
+      summary: Own User
+      description:
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /users/find:
+    get:
+      summary: Find Users
+      description: Find users with the given search string. Might return multiple results or non at all.
+      parameters:
+        - in: path
+          name: search
+          schema:
+            type: string
+          required: true
+          description: Any search string based on which users are returned
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /users/{id}:
+    get:
+      summary: User
+      description: Get the UserDetails of the user with the given id.
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: 'No user with the given id was found.'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  securitySchemes:
+    JWTauth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT 
+      in: header
+      description: 'Authorization: Bearer <token>'
+  schemas:
+    Authentication:
+      type: object
+      required:
+      - login
+      - password
+      properties:
+        login:
+          type: string
+          description: A unique login name.
+        password:
+          type: string
+          description: The password of the user.
+    AccessToken:
+      type: object
+      required:
+      - accessToken
+      - tokenType
+      properties:
+        accessToken:
+          type: string
+          description: The access token to be used in the Authorization Header of subsequent calls.
+        tokenType:
+          type: string
+          description: Type of the token, typically 'Bearer'.
+    UserDetails:
+      type: object
+      required:
+      - iconId
+      properties:
+        iconId:
+          type: string
+          description: Identifies the locally stored icon assigned to the given user.
+        displayName:
+          type: string
+          description: The name that is displayed publically inside the app.
+    User:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/UserDetails'
+      required:
+      - id
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the user
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+  responses:
+    UnauthorizedError:
+      description: Access token is missing or invalid
+
+security:
+  - JWTauth: []  
