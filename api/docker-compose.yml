@@ -1,15 +1,23 @@
 services:
   postgres: 
+    hostname: ${POSTGRES_HOST}
     image: postgres:15.1-alpine
     env_file:
       - .env
+    networks:
+      - backend
     ports:
       - ${POSTGRES_PORT}:5432
 
   api:
     image: ${IMAGE_NAME}:${IMAGE_VERSION}
+    build: .
     env_file:
       - .env
-    build: .
+    networks:
+      - backend
     ports:
       - ${API_PORT}:${API_PORT}
+
+networks:
+  backend:
