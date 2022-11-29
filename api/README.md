@@ -29,6 +29,12 @@ npm run migrate up
 ```
 Migrations are defined in the `migrations/` directory.
 
+## API Documentation
+The API Documentation can be hosted to `localhost:8080` by running 
+```shell
+npm run apiDoc
+```
+
 ## File structure
 ```
 api
