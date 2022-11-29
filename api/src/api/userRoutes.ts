@@ -28,6 +28,10 @@ userRouter.post('/create', async function(req, res) {
   res.status(HTTP_SUCCESS).send()
 })
 
+userRouter.post('/update', async function(req, res) {
+  res.status(HTTP_SUCCESS).send()
+})
+
 const pool = new Pool({
   database: process.env.POSTGRES_DB ?? 'postgres',
   host: process.env.POSTGRES_HOST ?? 'localhost',
