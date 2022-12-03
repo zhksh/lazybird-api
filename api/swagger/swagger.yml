@@ -8,10 +8,10 @@ servers:
 paths:
   /users:
     post:
-      summary: Sign Up
+      summary: Sign up
       description: Create and store a new user with the given data in the database. Also creates and returns a corresponding JWT used for authorization in subsequent requests. JWT
       security:
-        - 
+        - {}
       requestBody:
         description: User information
         required: true
@@ -45,7 +45,7 @@ paths:
       summary: Login 
       description: Authenticate a user by passing in login credentials. Returns a JWT that can be used in the Authorization Header to authenticate the user in subsequent API calls.
       security:
-        - 
+        - {}
       requestBody:
         description: User information
         required: true
@@ -66,12 +66,66 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /users/me:
-    get:
-      summary: Own User
-      description:
+  /posts/:
+    post:
+      summary: New post
+      description: Create a new post with the given details.
+      requestBody:
+        description: User information
+        required: true
+        content:
+          application/json:
+            schema: 
+              $ref: '#/components/schemas/CreatePost'
       responses:
         '200':
+          description: ok
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: List posts
+      description: Get a paginated list of posts. 
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostQuery'
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - nextPageToken
+                  - posts
+                properties:
+                  nextPageToken:
+                    type: string
+                    description: Opaque page token used to request subsequent pages. Empty string "" if no more data exists.
+                  posts:
+                    type: 'array'
+                    items:
+                      $ref: '#/components/schemas/Post'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /users/me:
+    get:
+      summary: Get own user
+      description: Get the user profile of the user associated with the given JWT token, i.e. the logged in user.
+      responses:
+        '200':
+          description: ok
           content:
             application/json:
               schema:
@@ -84,7 +138,7 @@ paths:
                 $ref: '#/components/schemas/Error'
   /users/find:
     get:
-      summary: Find Users
+      summary: Find users
       description: Find users with the given search string. Might return multiple results or non at all.
       parameters:
         - in: path
@@ -95,6 +149,7 @@ paths:
           description: Any search string based on which users are returned
       responses:
         '200':
+          description: ok
           content:
             application/json:
               schema:
@@ -109,10 +164,11 @@ paths:
                 $ref: '#/components/schemas/Error'
   /users/{id}:
     get:
-      summary: User
+      summary: Get user
       description: Get the UserDetails of the user with the given id.
       responses:
         '200':
+          description: ok
           content:
             application/json:
               schema:
@@ -127,11 +183,10 @@ paths:
                 $ref: '#/components/schemas/Error'
 components:
   securitySchemes:
-    JWTauth:
+    JWT:
       type: http
       scheme: bearer
       bearerFormat: JWT 
-      in: header
       description: 'Authorization: Bearer <token>'
   schemas:
     Authentication:
@@ -179,6 +234,54 @@ components:
         id:
           type: string
           description: Unique identifier of the user
+    CreatePost:
+      type: object
+      required:
+      - content
+      properties:
+        content:
+          type: string
+          description: The content of the post provided by the user
+    PostQuery:
+      type: object
+      required:
+      - pageSize
+      - pageToken
+      properties:
+        pageSize:
+          type: integer
+          description: The maximum number of results returned by the server. The server may further constraint this value.
+        pageToken:
+          type: string
+          description: Specifies which page to return. User "" to request the first page and then use the 'nextPageToken' returned by this function to request subsequent pages.
+    Post:
+      type: object
+      required:
+      - id
+      - user
+      - content
+      - timestamp
+      - likes
+      - commentCount
+      properties:
+        id: 
+          type: string
+          description: Unique ID identifying the post.
+        user:
+          $ref: '#/components/schemas/User'
+          description: The author of the post.
+        content:
+          type: string
+          description: The content of the post.
+        timestamp:
+          type: integer
+          description: Unix timestamp of the post creation.
+        likes:
+          type: integer
+          description: The number of likes added to the comment.
+        commentCount:
+          type: integer
+          description: The number of comments added to the post.
     Error:
       type: object
       required:
@@ -195,4 +298,4 @@ components:
       description: Access token is missing or invalid
 
 security:
-  - JWTauth: []  
+  - JWT: []  
