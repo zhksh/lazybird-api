@@ -80,6 +80,10 @@ paths:
       responses:
         '200':
           description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostMeta'
         default:
           description: unexpected error
           content:
@@ -88,7 +92,7 @@ paths:
                 $ref: '#/components/schemas/Error'
     get:
       summary: List posts
-      description: Get a paginated list of posts. 
+      description: Get a paginated list of posts.
       requestBody:
         required: true
         content:
@@ -112,7 +116,41 @@ paths:
                   posts:
                     type: 'array'
                     items:
-                      $ref: '#/components/schemas/Post'
+                      $ref: '#/components/schemas/PostMeta'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /posts/{id}:
+    get:
+      summary: Get post
+      description: Get the post with the given id.
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /posts/{id}/watch:
+    get:
+      summary: Watch post
+      description: Start watching the specified post. Establishes a Websocket connection that is called whenever information associated with the post is updated.
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'  # TODO: We might want to change this and only send diff or events.
         default:
           description: unexpected error
           content:
@@ -156,6 +194,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+        '404':
+          description: 'No user with the given id was found.'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /users/{id}/follow:
+    post:
+      summary: Follow/Unfollow
+      description: Follow or unfollow the specified user.
+      parameters:
+        - in: path
+          name: follow
+          schema:
+            type: boolean
+          required: true
+          description: If true, the user is followed. If false, the user is unfollowed.
+      responses:
+        '200':
+          description: ok
         '404':
           description: 'No user with the given id was found.'
         default:
@@ -228,23 +288,34 @@ components:
         content:
           type: string
           description: The content of the post provided by the user
+        isAI:
+          type: boolean
+          description: If true, the server uses the AI feature. 
+        mood:
+          type: string
+          description: The mood of the post. Valid values = ['happy','sad','angry','ironic']. If no value is provided, mood feature is not used.
+        temperature:
+          type: number
+          description: The temperature, i.e. craziness of the post.
+        # TODO: add additional needed parameters
     PostQuery:
       type: object
-      required:
-      - pageSize
       properties:
         userIds:
           type: array
           description: Specify userIds to only retrieve posts from these users. User magic 'me' as own userId. If no userIds are specified, all posts are returned by the server.
           items:
             type: string
+        isUserFeed:
+          type: boolean
+          description: If true, only posts from followed users are returned. 
         pageSize:
           type: integer
-          description: The maximum number of results returned by the server. The server may further constraint this value.
+          description: The maximum number of results returned by the server. If no value is given, a default is used. The server may further constraint the page size.
         pageToken:
           type: string
           description: Specifies which page to return. If not set or pageToken = "" the first page is returned. Use the 'nextPageToken' returned by previous request to get subsequent pages.
-    Post:
+    PostMeta:
       type: object
       required:
       - id
@@ -272,6 +343,20 @@ components:
         commentCount:
           type: integer
           description: The number of comments added to the post.
+    Post:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/PostMeta'
+      properties:
+        comments: 
+          type: array
+          items:
+            $ref: '#/components/schemas/Comment'
+    Comment:
+      type: object
+      properties:
+        content:
+          type: string
     Error:
       type: object
       required:
