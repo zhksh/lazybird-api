@@ -20,7 +20,7 @@ paths:
             schema: 
               allOf:
                 - $ref: '#/components/schemas/Authentication'
-                - $ref: '#/components/schemas/UserDetails'
+                - $ref: '#/components/schemas/UserSettings'
       responses:
         '200':
           description: 'User was successfully created. Returns a JWT access token that should be set in the Authorization header of subsequent API calls.'
@@ -119,23 +119,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /users/me:
-    get:
-      summary: Get own user
-      description: Get the user profile of the user associated with the given JWT token, i.e. the logged in user.
-      responses:
-        '200':
-          description: ok
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
   /users/find:
     get:
       summary: Find users
@@ -165,7 +148,7 @@ paths:
   /users/{id}:
     get:
       summary: Get user
-      description: Get the UserDetails of the user with the given id.
+      description: Get the UserSettings of the user with the given id. Use magic id 'me' to get the user associated with the provided JWT token, i.e. the logged in user.
       responses:
         '200':
           description: ok
@@ -213,7 +196,7 @@ components:
         tokenType:
           type: string
           description: Type of the token, typically 'Bearer'.
-    UserDetails:
+    UserSettings:
       type: object
       required:
       - iconId
@@ -227,13 +210,16 @@ components:
     User:
       type: object
       allOf:
-        - $ref: '#/components/schemas/UserDetails'
+        - $ref: '#/components/schemas/UserSettings'
       required:
       - id
       properties:
         id:
           type: string
           description: Unique identifier of the user
+        followers:
+          type: integer
+          description: Number of followers  # Is number of followers enough, or do we want to display the actual followers?
     CreatePost:
       type: object
       required:
@@ -246,14 +232,18 @@ components:
       type: object
       required:
       - pageSize
-      - pageToken
       properties:
+        userIds:
+          type: array
+          description: Specify userIds to only retrieve posts from these users. User magic 'me' as own userId. If no userIds are specified, all posts are returned by the server.
+          items:
+            type: string
         pageSize:
           type: integer
           description: The maximum number of results returned by the server. The server may further constraint this value.
         pageToken:
           type: string
-          description: Specifies which page to return. User "" to request the first page and then use the 'nextPageToken' returned by this function to request subsequent pages.
+          description: Specifies which page to return. If not set or pageToken = "" the first page is returned. Use the 'nextPageToken' returned by previous request to get subsequent pages.
     Post:
       type: object
       required:
