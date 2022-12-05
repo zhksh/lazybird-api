@@ -76,7 +76,7 @@ paths:
         content:
           application/json:
             schema: 
-              $ref: '#/components/schemas/CreatePost'
+              $ref: '#/components/schemas/NewPost'
       responses:
         '200':
           description: ok
@@ -142,7 +142,7 @@ paths:
                 $ref: '#/components/schemas/Error'
   /posts/{id}/watch:
     get:
-      summary: Watch post
+      summary: (WS) Watch post
       description: Start watching the specified post. Establishes a Websocket connection that is called whenever information associated with the post is updated.
       responses:
         '200':
@@ -151,6 +151,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Post'  # TODO: We might want to change this and only send diff or events.
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /posts/{id}/likes:
+    post:
+      summary: Like/Unlike post
+      description: Like the given post.
+      parameters:
+        - in: path
+          name: like
+          schema:
+            type: boolean
+          required: true
+          description: If true, the post is liked. If false, the post is unliked.
+      responses:
+        '200':
+          description: ok
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /posts/{id}/comments:
+    post:
+      summary: New comment
+      description: Add a new comment to the given post.
+      requestBody:
+        description: User information
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewComment'
+
+      responses:
+        '200':
+          description: ok
         default:
           description: unexpected error
           content:
@@ -235,10 +276,10 @@ components:
     Authentication:
       type: object
       required:
-      - login
+      - username
       - password
       properties:
-        login:
+        username:
           type: string
           description: A unique login name.
         password:
@@ -280,7 +321,7 @@ components:
         followers:
           type: integer
           description: Number of followers  # Is number of followers enough, or do we want to display the actual followers?
-    CreatePost:
+    NewPost:
       type: object
       required:
       - content
@@ -290,7 +331,10 @@ components:
           description: The content of the post provided by the user
         isAI:
           type: boolean
-          description: If true, the server uses the AI feature. 
+          description: If true, the server uses the AI feature.
+        autogenerateAnswers:
+          type: boolean
+          description: If true, the server will automatically generate comments on the post.
         mood:
           type: string
           description: The mood of the post. Valid values = ['happy','sad','angry','ironic']. If no value is provided, mood feature is not used.
@@ -352,9 +396,27 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Comment'
+    NewComment:
+      type: object
+      required:
+      - content
+      properties:
+        content:
+          type: string
+          description: The content of the comment
     Comment:
       type: object
+      required:
+        - id
+        - content
+        - user
       properties:
+        id:
+          type: string
+          description: Unique ID of the comment
+        user:
+          $ref: '#/components/schemas/User'
+          description: The author of the comment.
         content:
           type: string
     Error:
