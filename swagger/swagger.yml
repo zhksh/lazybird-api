@@ -123,6 +123,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /generate/incontext:
+    post:
+      summary: Generate post from history
+      description: Given n turns of conversation create the next post 
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostQuery'
+
+
   /posts/{id}:
     get:
       summary: Get post
