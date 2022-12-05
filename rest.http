@@ -17,3 +17,10 @@ Content-Type: application/json
 {
   "prefix" : "Hi man i just met your mother and"
 }
+###
+POST https://mvsp-api.ncmg.eu/generate/incontext
+Content-Type: application/json
+
+{
+
+}

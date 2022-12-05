@@ -126,15 +126,20 @@ paths:
   /generate/incontext:
     post:
       summary: Generate post from history
-      description: Given n turns of conversation create the next post 
+      description: Given n turns of conversation create the next post
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/ContextPost'
-
-
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
   /posts/{id}:
     get:
       summary: Get post
@@ -357,27 +362,20 @@ components:
     ContextPost:
       type: object
       required:
-      - metacontext
+        - turns
       properties:
-        metacontext:
-          type: object
-          description: Parmeters for contextual information
-           properties:
-            turns:
-              type: int
-              description: The number of past turns to be considered
-            postId:
-              type: string
-              description: The Id of the post which past context is used.
-            autogenerateAnswers:
-              type: boolean
-              description: If true, the server will automatically generate answers.
-            temperature:
-              type: number
-              description: The randomness, i.e. craziness of the post.
-
-        # TODO: add additional needed parameters
-    
+        turns:
+          type: integer
+          description: The content of the post provided by the user
+        postId:
+          type: string
+          description: The Id of the post which past context is used.
+        autogenerateAnswers:
+          type: boolean
+          description: If true, the server will automatically generate answers.
+        temperature:
+          type: number
+          description: The randomness, i.e. craziness of the post.
     PostQuery:
       type: object
       properties:
