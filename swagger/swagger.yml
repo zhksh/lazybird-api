@@ -132,7 +132,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PostQuery'
+              $ref: '#/components/schemas/ContextPost'
 
 
   /posts/{id}:
@@ -354,6 +354,30 @@ components:
           type: number
           description: The temperature, i.e. craziness of the post.
         # TODO: add additional needed parameters
+    ContextPost:
+      type: object
+      required:
+      - metacontext
+      properties:
+        metacontext:
+          type: object
+          description: Parmeters for contextual information
+           properties:
+            turns:
+              type: int
+              description: The number of past turns to be considered
+            postId:
+              type: string
+              description: The Id of the post which past context is used.
+            autogenerateAnswers:
+              type: boolean
+              description: If true, the server will automatically generate answers.
+            temperature:
+              type: number
+              description: The randomness, i.e. craziness of the post.
+
+        # TODO: add additional needed parameters
+    
     PostQuery:
       type: object
       properties:
