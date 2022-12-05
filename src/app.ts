@@ -3,6 +3,8 @@ import errorhandler from 'errorhandler'
 import { userRouter } from './api/userRoutes'
 import { backendRouter } from './api/backendRoutes'
 
+//if the port is te be changed to anaything other than 6969 you will need to change thet in
+// the forward pass from nginx too
 const PORT = process.env.API_PORT ?? 6969
 const app = express()
 
