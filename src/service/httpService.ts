@@ -1,7 +1,7 @@
 import * as http from "http";
 import {TIMEOUT} from "./config";
 
-export function post(url, data): Promise<Error|string> {
+export function post(url, data): Promise<string> {
     const dataEncoded = JSON.stringify(data)
 
     const options = {
