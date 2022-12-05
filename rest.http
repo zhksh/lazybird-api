@@ -5,3 +5,12 @@ Content-Type: application/json
 {
 
 }
+
+
+####
+POST http://localhost:6969/generate/complete
+Content-Type: application/json
+
+{
+  "prefix" : "Hi man i just met your mother and"
+}

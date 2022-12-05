@@ -1,7 +1,7 @@
 import * as http from "http";
 import {TIMEOUT} from "./config";
 
-export function post(url, data): Promise<Error|JSON> {
+export function post(url, data): Promise<Error|string> {
     const dataEncoded = JSON.stringify(data)
 
     const options = {
@@ -26,8 +26,8 @@ export function post(url, data): Promise<Error|JSON> {
                     'end',
                     () =>
                         res.statusCode === 200
-                            ? resolve(JSON.parse(Buffer.concat(buffers).toString()))
-                            : reject(Buffer.concat(buffers))
+                            ? resolve(Buffer.concat(buffers).toString())
+                            : reject(Buffer.concat(buffers).toString())
                 );
             }
         );
