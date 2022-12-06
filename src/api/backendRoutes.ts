@@ -14,7 +14,14 @@ backendRouter.post('/incontext', async function(req, res) {
             return   res.status(HTTP_SUCCESS).json(JSON.parse(bres))
         }).catch((err) => {
             console.log(err.toString())
-            return res.status(HTTP_INTERNAL_ERROR).json(JSON.parse(err.toString()))
+            try {
+                // handled errs from handled the backend
+                return res.status(HTTP_INTERNAL_ERROR).json(JSON.parse(err.toString()))
+            }
+            catch (e) {
+                // handled errs from unhandled the backend
+                return res.status(HTTP_INTERNAL_ERROR).json({"error": e.toString()})
+            }
         })
     }
     catch(e){
@@ -29,12 +36,17 @@ backendRouter.post('/complete', async function(req, res) {
             return   res.status(HTTP_SUCCESS).json(JSON.parse(backendResonse))
         }).catch((err) => {
             console.log(err.toString())
-            // handled errs from the backend
-            return res.status(HTTP_INTERNAL_ERROR).json(JSON.parse(err.toString()))
+            try {
+                // handled errs from handled the backend
+                return res.status(HTTP_INTERNAL_ERROR).json(JSON.parse(err.toString()))
+            }
+            catch (e) {
+                // handled errs from unhandled the backend
+                return res.status(HTTP_INTERNAL_ERROR).json({"error": e.toString()})
+            }
         })
     }
     catch (e) {
-        // unhandled errs from the backend
         return res.status(HTTP_INTERNAL_ERROR).json({"error": e.toString()})
     }
 
