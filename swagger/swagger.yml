@@ -5,9 +5,21 @@ info:
   description: ''
 servers:
 - url: http://localhost:6969/
+tags:
+  - name: User
+    description: Everything user related.
+  - name: Blog Post
+    description: Everything about blog-posts.
+x-tagGroups:
+  - name: App API
+    tags:
+      - User
+      - Blog Post
 paths:
   /users:
     post:
+      tags:
+        - User
       summary: Sign up
       description: Create and store a new user with the given data in the database. Also creates and returns a corresponding JWT used for authorization in subsequent requests. JWT
       security:
@@ -40,8 +52,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /auth:
+  /users/auth:
     post:
+      tags:
+        - User
       summary: Login 
       description: Authenticate a user by passing in login credentials. Returns a JWT that can be used in the Authorization Header to authenticate the user in subsequent API calls.
       security:
@@ -68,6 +82,8 @@ paths:
                 $ref: '#/components/schemas/Error'
   /posts/:
     post:
+      tags:
+        - Blog Post
       summary: New post
       description: Create a new post with the given details.
       requestBody:
@@ -91,6 +107,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
     get:
+      tags:
+        - Blog Post
       summary: List posts
       description: Get a paginated list of posts.
       requestBody:
@@ -142,6 +160,8 @@ paths:
                 $ref: '#/components/schemas/Post'
   /posts/{id}:
     get:
+      tags:
+        - post
       summary: Get post
       description: Get the post with the given id.
       responses:
@@ -159,6 +179,8 @@ paths:
                 $ref: '#/components/schemas/Error'
   /posts/{id}/watch:
     get:
+      tags:
+        - Blog Post
       summary: (WS) Watch post
       description: Start watching the specified post. Establishes a Websocket connection that is called whenever information associated with the post is updated.
       responses:
@@ -176,6 +198,8 @@ paths:
                 $ref: '#/components/schemas/Error'
   /posts/{id}/likes:
     post:
+      tags:
+        - Blog Post
       summary: Like/Unlike post
       description: Like the given post.
       parameters:
@@ -196,6 +220,8 @@ paths:
                 $ref: '#/components/schemas/Error'
   /posts/{id}/comments:
     post:
+      tags:
+        - Blog Post
       summary: New comment
       description: Add a new comment to the given post.
       requestBody:
@@ -217,6 +243,8 @@ paths:
                 $ref: '#/components/schemas/Error'
   /users/find:
     get:
+      tags:
+        - User
       summary: Find users
       description: Find users with the given search string. Might return multiple results or non at all.
       parameters:
@@ -243,6 +271,8 @@ paths:
                 $ref: '#/components/schemas/Error'
   /users/{id}:
     get:
+      tags:
+        - User
       summary: Get user
       description: Get the UserSettings of the user with the given id. Use magic id 'me' to get the user associated with the provided JWT token, i.e. the logged in user.
       responses:
@@ -262,6 +292,8 @@ paths:
                 $ref: '#/components/schemas/Error'
   /users/{id}/follow:
     post:
+      tags:
+        - User
       summary: Follow/Unfollow
       description: Follow or unfollow the specified user.
       parameters:
