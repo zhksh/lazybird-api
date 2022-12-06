@@ -40,7 +40,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /auth:
+  /users/auth:
     post:
       summary: Login 
       description: Authenticate a user by passing in login credentials. Returns a JWT that can be used in the Authorization Header to authenticate the user in subsequent API calls.
