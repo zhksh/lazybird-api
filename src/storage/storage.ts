@@ -1,5 +1,5 @@
 import { Pool } from "pg";
-import { AlreadyExistsError } from "./errors";
+import { AlreadyExistsError } from "../errors";
 
 export interface User {
     id: string,

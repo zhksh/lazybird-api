@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import express from 'express'
 import { createUser } from '../service/user'
 import { HTTP_ALREADY_EXISTS, HTTP_BAD_REQUEST, HTTP_INTERNAL_ERROR, HTTP_SUCCESS } from './codes';
-import { AlreadyExistsError } from '../storage/errors';
+import { AlreadyExistsError } from '../errors';
 
 export const userRouter = express.Router()
 
