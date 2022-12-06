@@ -1,5 +1,5 @@
 import * as http from "http";
-import {TIMEOUT} from "./config";
+import {TIMEOUT} from "../env";
 
 export function post(url, data): Promise<string> {
     const dataEncoded = JSON.stringify(data)

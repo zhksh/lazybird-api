@@ -1,4 +1,4 @@
-import {BACKEND_HOST, AUTOCOMPLETE_PATH, IN_CONTEXT_PATH} from "./config";
+import {BACKEND_HOST, AUTOCOMPLETE_PATH, IN_CONTEXT_PATH} from "../env";
 import {post} from "./httpService";
 
 export async function createInContextPost(data: any): Promise<string>{
