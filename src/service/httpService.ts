@@ -1,7 +1,7 @@
 import * as http from "http";
 import {TIMEOUT} from "../env";
 
-export function post(url, data): Promise<string> {
+export async function post(url, data): Promise<string> {
     const dataEncoded = JSON.stringify(data)
 
     const options = {
@@ -20,7 +20,7 @@ export function post(url, data): Promise<string> {
             options,
             res => {
                 const buffers = [];
-                res.on('error', reject);
+                res.on('error', function(e){console.log(e.toString())});
                 res.on('data', buffer => buffers.push(buffer));
                 res.on(
                     'end',
@@ -30,7 +30,8 @@ export function post(url, data): Promise<string> {
                             : reject(Buffer.concat(buffers).toString())
                 );
             }
-        );
+        ).on('error', function(e){
+            reject(e.toString())});
         req.write(dataEncoded);
         req.end();
     });

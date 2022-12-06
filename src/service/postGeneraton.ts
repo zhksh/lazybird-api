@@ -25,12 +25,10 @@ export async function createInContextPost(data: any): Promise<string>{
     }));
 
     const url = BACKEND_HOST + IN_CONTEXT_PATH
-
     return post(url, dummmy_payload)
 }
 
 export async function complete(data: any): Promise<string>{
-
     const url = BACKEND_HOST + AUTOCOMPLETE_PATH
 
     return post(url, data)
