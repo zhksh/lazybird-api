@@ -12,7 +12,7 @@ POST http://localhost:6969/generate/complete
 Content-Type: application/json
 
 {
-  "prefox" : "If your mother only knew",
+  "prefix" : "If your mother only knew",
   "temperature" : 0.8
 }
 ####
@@ -26,5 +26,15 @@ POST https://mvsp-api.ncmg.eu/generate/incontext
 Content-Type: application/json
 
 {
+  "temperature" : 0.8
 
+}
+
+###
+POST https://mvsp-api.ncmg.eu/generate/complete
+Content-Type: application/json
+
+{
+"prefix" : "If your mother only knew",
+"temperature" : 0.8
 }

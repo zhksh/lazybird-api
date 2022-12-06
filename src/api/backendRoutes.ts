@@ -23,12 +23,19 @@ backendRouter.post('/incontext', async function(req, res) {
 })
 
 backendRouter.post('/complete', async function(req, res) {
+    try {
+        const resp = complete(req.body)
+        resp.then((backendResonse) => {
+            return   res.status(HTTP_SUCCESS).json(JSON.parse(backendResonse))
+        }).catch((err) => {
+            console.log(err.toString())
+            // handled errs from the backend
+            return res.status(HTTP_INTERNAL_ERROR).json(JSON.parse(err.toString()))
+        })
+    }
+    catch (e) {
+        // unhandled errs from the backend
+        return res.status(HTTP_INTERNAL_ERROR).json({"error": e.toString()})
+    }
 
-  const resp = complete(req.body)
-  resp.then((backendResonse) => {
-    return   res.status(HTTP_SUCCESS).json(JSON.parse(backendResonse))
-  }).catch((err) => {
-    console.log(err.toString())
-    return res.status(HTTP_INTERNAL_ERROR).json(JSON.parse(err.toString()))
-  })
 })
