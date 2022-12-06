@@ -8,16 +8,13 @@ export const backendRouter = express.Router()
  * Create new post given the history of a given post
  */
 backendRouter.post('/incontext', async function(req, res) {
-  // const userId:string = req.body.user
-  // const postId:string = req.body.postId
-
     try {
         const resp = createInContextPost(req.body)
         resp.then((bres) => {
             return   res.status(HTTP_SUCCESS).json(JSON.parse(bres))
         }).catch((err) => {
             console.log(err.toString())
-            return res.status(HTTP_INTERNAL_ERROR).json(JSON.stringify({"error": err.toString()}))
+            return res.status(HTTP_INTERNAL_ERROR).json(JSON.parse(err.toString()))
         })
     }
     catch(e){
@@ -28,11 +25,10 @@ backendRouter.post('/incontext', async function(req, res) {
 backendRouter.post('/complete', async function(req, res) {
 
   const resp = complete(req.body)
-
   resp.then((backendResonse) => {
     return   res.status(HTTP_SUCCESS).json(JSON.parse(backendResonse))
   }).catch((err) => {
     console.log(err.toString())
-    return res.status(HTTP_INTERNAL_ERROR).json(JSON.stringify({"error": err.toString()}))
+    return res.status(HTTP_INTERNAL_ERROR).json(JSON.parse(err.toString()))
   })
 })

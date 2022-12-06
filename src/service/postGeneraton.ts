@@ -1,4 +1,3 @@
-import express from 'express'
 import {BACKEND_HOST, AUTOCOMPLETE_PATH, IN_CONTEXT_PATH} from "./config";
 import {post} from "./httpService";
 
