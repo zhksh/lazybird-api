@@ -9,7 +9,7 @@ exports.up = pgm => {
             notNull: true,
             unique: true,
         },
-        login: {
+        username: {
             type: 'text',
             notNull: true,
             unique: true,
@@ -17,6 +17,13 @@ exports.up = pgm => {
         secret: {
             type: 'text',
             notNull: true,
+        },
+        icon_id: {
+            type: 'text',
+            notNull: true,
+        },
+        display_name: {
+            type: 'text',
         },
     })
 };

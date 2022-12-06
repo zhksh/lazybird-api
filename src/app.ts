@@ -9,7 +9,7 @@ const PORT = process.env.API_PORT ?? 6969
 const app = express()
 
 app.use(express.json())
-app.use('/user', userRouter)
+app.use('/users', userRouter)
 app.use('/generate', backendRouter)
 
 app.get('/', (req, res) => {
