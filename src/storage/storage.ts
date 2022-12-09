@@ -2,7 +2,6 @@ import { Pool } from "pg";
 import { AlreadyExistsError, NotFoundError } from "../errors";
 
 export interface User {
-    id: string,
     username: string,
     secret: string,
     icon_id: string,
@@ -13,8 +12,8 @@ export async function storeUser(pool: Pool, user: User): Promise<AlreadyExistsEr
     try {
         const client = await pool.connect()
 
-        const sql = `INSERT INTO users(id, username, secret, icon_id, display_name) VALUES ($1, $2, $3, $4, $5)`
-        const values = [user.id, user.username, user.secret, user.icon_id, user.display_name]
+        const sql = `INSERT INTO users(username, secret, icon_id, display_name) VALUES ($1, $2, $3, $4)`
+        const values = [user.username, user.secret, user.icon_id, user.display_name]
 
         await client.query(sql, values)
 

@@ -269,12 +269,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /users/{id}:
+  /users/{username}:
     get:
       tags:
         - User
       summary: Get user
-      description: Get the UserSettings of the user with the given id. Use magic id 'me' to get the user associated with the provided JWT token, i.e. the logged in user.
+      description: Get the UserSettings of the user with the given username. Use magic id 'me' to get the user associated with the provided JWT token, i.e. the logged in user.
       responses:
         '200':
           description: ok
@@ -283,14 +283,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
         '404':
-          description: 'No user with the given id was found.'
+          description: 'No user with the given username was found.'
         default:
           description: unexpected error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /users/{id}/follow:
+  /users/{username}/follow:
     post:
       tags:
         - User
@@ -362,11 +362,11 @@ components:
       allOf:
         - $ref: '#/components/schemas/UserSettings'
       required:
-      - id
+      - username
       properties:
-        id:
+        username:
           type: string
-          description: Unique identifier of the user
+          description: Unique username of the user
         followers:
           type: integer
           description: Number of followers  # Is number of followers enough, or do we want to display the actual followers?
@@ -411,9 +411,9 @@ components:
     PostQuery:
       type: object
       properties:
-        userIds:
+        usernames:
           type: array
-          description: Specify userIds to only retrieve posts from these users. User magic 'me' as own userId. If no userIds are specified, all posts are returned by the server.
+          description: Specify usernames to only retrieve posts from these users. User magic 'me' as own username. If no usernames are specified, all posts are returned by the server.
           items:
             type: string
         isUserFeed:

@@ -1,19 +1,21 @@
 import bcrypt from 'bcrypt'
 import { Pool } from 'pg'
-import { v4 } from 'uuid'
 import { SALT_ROUNDS } from '../env'
 import { AlreadyExistsError, UnauthorizedError } from '../errors'
 import { getUserByUsername, storeUser } from '../storage/storage'
 import { encodeJWT } from './jwt'
 
 export async function createUser(pool: Pool, username: string, password: string, iconId: string, displayName?: string): Promise<{err?: Error | AlreadyExistsError, token?: string}> {
+    if (username === 'me') {
+        return {err: new AlreadyExistsError('username \'me\' reserved. please use a differen username')} 
+    }
+    
     const {hash, err} = await hashPassword(password)
     if (err) {
         return {err: err}
     }
 
     const user = {
-        id: v4(),
         username: username, 
         secret: hash,
         icon_id: iconId,
@@ -25,7 +27,7 @@ export async function createUser(pool: Pool, username: string, password: string,
         return {err: storeErr}
     }
 
-    return encodeJWT({userId: user.id})
+    return encodeJWT({username: user.username})
 }
 
 export async function authenticateUser(pool: Pool, username: string, password: string): Promise<{err?: Error | UnauthorizedError, token?: string}> {
@@ -37,7 +39,7 @@ export async function authenticateUser(pool: Pool, username: string, password: s
     try {
         const passwortIsCorrect = await bcrypt.compare(password, user.secret)
         if (passwortIsCorrect) {
-            return encodeJWT({userId: user.id})
+            return encodeJWT({username: username})
         }
 
         return {err: new UnauthorizedError('incorrect password')}

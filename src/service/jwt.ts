@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken'
 import { JWT_SECRET_KEY } from "../env"
 
 export interface Payload {    
-    userId: string
+    username: string
 }
 
 export function encodeJWT(payload: Payload): {err?: Error, token?: string} {
