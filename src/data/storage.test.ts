@@ -2,7 +2,7 @@ import { expect } from 'chai'
 import 'mocha'
 import { Pool } from 'pg'
 import { uuid } from 'uuidv4';
-import { storeUser, User } from './storage'
+import { storeUserDetails } from './storage'
 
 describe('storeUser', function() {
   it('happy path', async function() {

@@ -32,7 +32,7 @@ paths:
             schema: 
               allOf:
                 - $ref: '#/components/schemas/Authentication'
-                - $ref: '#/components/schemas/UserSettings'
+                - $ref: '#/components/schemas/UserDetails'
       responses:
         '200':
           description: 'User was successfully created. Returns a JWT access token that should be set in the Authorization header of subsequent API calls.'
@@ -274,7 +274,7 @@ paths:
       tags:
         - User
       summary: Get user
-      description: Get the UserSettings of the user with the given username. Use magic id 'me' to get the user associated with the provided JWT token, i.e. the logged in user.
+      description: Get the User with the given username. Use magic id 'me' to get the user associated with the provided JWT token, i.e. the logged in user.
       responses:
         '200':
           description: ok
@@ -346,11 +346,15 @@ components:
         tokenType:
           type: string
           description: Type of the token, typically 'Bearer'.
-    UserSettings:
+    UserDetails:
       type: object
       required:
+      - username
       - iconId
       properties:
+        username:
+          type: string
+          description: Unique username of the user
         iconId:
           type: string
           description: Identifies the locally stored icon assigned to the given user.
@@ -360,13 +364,8 @@ components:
     User:
       type: object
       allOf:
-        - $ref: '#/components/schemas/UserSettings'
-      required:
-      - username
+        - $ref: '#/components/schemas/UserDetails'
       properties:
-        username:
-          type: string
-          description: Unique username of the user
         followers:
           type: integer
           description: Number of followers  # Is number of followers enough, or do we want to display the actual followers?

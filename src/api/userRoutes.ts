@@ -1,16 +1,26 @@
 import { Pool } from 'pg'
 import { Request, Response } from 'express';
 import express from 'express'
-import { authenticateUser, createUser } from '../service/user'
+import { authenticateUser, createUser, getUser } from '../service/user'
 import { HTTP_ALREADY_EXISTS, HTTP_BAD_REQUEST, HTTP_INTERNAL_ERROR, HTTP_NOT_FOUND, HTTP_SUCCESS, HTTP_UNAUTHORIZED } from './codes';
 import { AlreadyExistsError, BadRequestError, NotFoundError, UnauthorizedError } from '../errors';
+import { authenticate } from './middleware';
 
+/**
+ * Defines all routes necessary for authorization. 
+ */
+export const authRouter = express.Router()
+
+/**
+ * Defines all users/ routes. Requires all requests to be authenticated.
+ */
 export const userRouter = express.Router()
+userRouter.use(authenticate)
 
 /**
  * Create a new user.
  */
-userRouter.post('/', async (req: Request, res: Response) => {
+authRouter.post('/', async (req: Request, res: Response) => {
   const body = req.body
   
   const invalid = validateSignUpRequest(body)
@@ -19,7 +29,13 @@ userRouter.post('/', async (req: Request, res: Response) => {
     return
   }
 
-  const {err, token} = await createUser(pool, body.username, body.password, body.iconId, body.displayName)
+  const details = {
+    username: body.username, 
+    icon_id: body.iconId, 
+    display_name: body.displayName,
+  }
+
+  const {err, token} = await createUser(pool, details, body.password)
   if (err) {
     sendError(res, err)
     return
@@ -35,7 +51,7 @@ userRouter.post('/', async (req: Request, res: Response) => {
 /** 
  * Authenticate a user.
  */
-userRouter.post('/auth', async (req: Request, res: Response) => {
+authRouter.post('/auth', async (req: Request, res: Response) => {
   const body = req.body
   
   const invalid = validateAuthRequest(body)
@@ -58,23 +74,32 @@ userRouter.post('/auth', async (req: Request, res: Response) => {
 })
 
 /** 
- * Find users given a search string.
+ * Get the user with the given ID.
  */
- userRouter.get('/find', async (req: Request, res: Response) => {
-  throw 'Not implemented'
+userRouter.get('/:username', async (req: Request, res: Response) => {
+  const username = (req.params.username === 'me') ? req.body.username : req.params.username
+  
+  const {err, user} = await getUser(pool, username)
+  if (err) {
+    sendError(res, err)
+    return
+  }
+
+  res.status(HTTP_SUCCESS)
+    .json(user)
 })
 
 /** 
- * Get the user with the given ID.
+ * Find users given a search string.
  */
- userRouter.get('/{id}', async (req: Request, res: Response) => {
+userRouter.get('/find', async (req: Request, res: Response) => {
   throw 'Not implemented'
 })
 
 /** 
  * Follow the given user.
  */
- userRouter.post('/{id}/follow', async (req: Request, res: Response) => {
+ userRouter.post('/:username/follow', async (req: Request, res: Response) => {
   throw 'Not implemented'
 })
 
