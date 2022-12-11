@@ -35,17 +35,15 @@ authRouter.post('/', async (req: Request, res: Response) => {
     display_name: body.displayName,
   }
 
-  const {err, token} = await createUser(pool, details, body.password)
-  if (err) {
-    sendError(res, err)
-    return
-  }
-
-  res.status(HTTP_SUCCESS)
+  createUser(pool, details, body.password)
+  .then(token => {
+    res.status(HTTP_SUCCESS)
     .json({
       accessToken: token,
       tokenType: 'Bearer',
     })
+  })
+  .catch(err => sendError(res, err))
 })
 
 /** 
@@ -60,17 +58,15 @@ authRouter.post('/auth', async (req: Request, res: Response) => {
     return
   }
 
-  const {err, token} = await authenticateUser(pool, body.username, body.password)
-  if (err) {
-    sendError(res, err)
-    return
-  }
-
-  res.status(HTTP_SUCCESS)
+  authenticateUser(pool, body.username, body.password)
+  .then(token => {
+    res.status(HTTP_SUCCESS)
     .json({
       accessToken: token,
       tokenType: 'Bearer',
     })
+  })
+  .catch(err => sendError(res, err))  
 })
 
 /** 

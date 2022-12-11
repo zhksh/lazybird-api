@@ -6,62 +6,35 @@ import { getFollowersForUser, getSecretByUsername, getUserDetailsByUsername, sto
 import { encodeJWT } from './jwt'
 import { User, UserDetails } from '../data/models'
 
-export async function createUser(pool: Pool, userDetails: UserDetails, password: string): Promise<{err?: Error | AlreadyExistsError, token?: string}> {
+export async function createUser(pool: Pool, userDetails: UserDetails, password: string): Promise<string> {
     if (userDetails.username === 'me') {
-        return {err: new AlreadyExistsError('username \'me\' reserved. please use a differen username')} 
+        throw new AlreadyExistsError('username \'me\' reserved. please use a differen username')
     }
+
+    const hash = await hashPassword(password)
+
+    await storeUserDetails(pool, userDetails, hash)
     
-    const {hash, err} = await hashPassword(password)
-    if (err) {
-        return {err: err}
-    }
-
-    const storeErr = await storeUserDetails(pool, userDetails, hash)
-    if (storeErr) {
-        return {err: storeErr}
-    }
-
-    return encodeJWT({username: userDetails.username})
+    return encodeJWT({username: userDetails.username}).toPromise()
 }
 
-export async function authenticateUser(pool: Pool, username: string, password: string): Promise<{err?: Error | UnauthorizedError, token?: string}> {
-    const {secret, err} = await getSecretByUsername(pool, username)
-    if (err) {
-        return {err: err}
+export async function authenticateUser(pool: Pool, username: string, password: string): Promise<string> {
+    const secret = await getSecretByUsername(pool, username)
+    
+    const passwortIsCorrect = await bcrypt.compare(password, secret)
+    if (passwortIsCorrect) {
+        return encodeJWT({username: username}).toPromise()
     }
 
-    try {
-        const passwortIsCorrect = await bcrypt.compare(password, secret)
-        if (passwortIsCorrect) {
-            return encodeJWT({username: username})
-        }
-
-        return {err: new UnauthorizedError('incorrect password')}
-    } catch(e) {
-        return {err: e}
-    }
+    throw new UnauthorizedError('incorrect password')
 }
 
 export async function getUser(pool: Pool, username: string): Promise<{err?: Error | NotFoundError, user?: User}> {
-    const {err, userDetails} = await getUserDetailsByUsername(pool, username)
-    if (err) {
-        return {err: err}
-    }
-
-    // TODO: Think about functional style error return (https://medium.com/fashioncloud/a-functional-programming-approach-to-error-handling-in-typescript-d9e8c58ab7f)
-    const result = await getFollowersForUser(pool, username)
-    if (result.err) {
-        return {err: err}
-    }
-    
-    return {user: {...userDetails, followers: result.followers.length}}
+    const userDetails = await getUserDetailsByUsername(pool, username)
+    const followers = await getFollowersForUser(pool, username)
+    return {user: {...userDetails, followers: followers.length}}
 }
 
-async function hashPassword(password: string): Promise<{ hash?: string; err?: Error }> {
-    try {
-        const hash = await bcrypt.hash(password, SALT_ROUNDS)
-        return {hash: hash}
-    } catch(e) {
-        return {err: e}
-    }
+async function hashPassword(password: string): Promise<string> {
+    return bcrypt.hash(password, SALT_ROUNDS)    
 }

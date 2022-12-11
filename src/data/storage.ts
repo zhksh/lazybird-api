@@ -2,7 +2,7 @@ import { Pool } from "pg";
 import { AlreadyExistsError, NotFoundError } from "../errors";
 import { UserDetails } from "./models";
 
-export async function storeUserDetails(pool: Pool, user: UserDetails, secret: string): Promise<AlreadyExistsError | Error | void> {
+export async function storeUserDetails(pool: Pool, user: UserDetails, secret: string) {
     try {
         const client = await pool.connect()
 
@@ -14,55 +14,47 @@ export async function storeUserDetails(pool: Pool, user: UserDetails, secret: st
         client.release()
     } catch(err) {
         if (isDuplicateKeyError(err)) {
-            return new AlreadyExistsError('user with same username already exists')
+            throw new AlreadyExistsError('user with same username already exists')
         }
 
-        return err
+        throw err
     } 
 }
 
-export async function getSecretByUsername(pool: Pool, username: string): Promise<{err?: Error, secret?: string}> {
-    try {
-        const client = await pool.connect()
+export async function getSecretByUsername(pool: Pool, username: string): Promise<string> {
+    const client = await pool.connect()
 
-        const sql = `SELECT secret FROM users WHERE users.username = $1`
+    const sql = `SELECT secret FROM users WHERE users.username = $1`
 
-        const result = await client.query(sql, [username])
+    const result = await client.query(sql, [username])
 
-        if (result.rowCount < 1) {
-            return {err: new NotFoundError('user not found')}
-        }
+    if (result.rowCount < 1) {
+        throw new NotFoundError('user not found')
+    }
 
-        client.release()
+    client.release()
 
-        return {secret: result.rows[0].secret}
-    } catch(err) {
-        return err
-    } 
+    return result.rows[0].secret
 }
 
 
-export async function getUserDetailsByUsername(pool: Pool, username: string): Promise<{err?: Error, userDetails?: UserDetails}> {
-    try {
-        const client = await pool.connect()
+export async function getUserDetailsByUsername(pool: Pool, username: string): Promise<UserDetails> {
+    const client = await pool.connect()
 
-        const sql = `SELECT username, icon_id, display_name FROM users WHERE users.username = $1`
+    const sql = `SELECT username, icon_id, display_name FROM users WHERE users.username = $1`
 
-        const result = await client.query(sql, [username])
+    const result = await client.query(sql, [username])
 
-        if (result.rowCount < 1) {
-            return {err: new NotFoundError('user not found')}
-        }
+    if (result.rowCount < 1) {
+        throw new NotFoundError('user not found')
+    }
 
-        client.release()
+    client.release()
 
-        return {userDetails: result.rows[0]}
-    } catch(err) {
-        return err
-    } 
+    return result.rows[0]
 }
 
-export async function getFollowersForUser(pool: Pool, username: string): Promise<{err?: Error, followers?: UserDetails[]}> {
+export async function getFollowersForUser(pool: Pool, username: string): Promise<UserDetails[]> {
     // TODO: Implement once follow table exists
     throw 'Implement Me!'
 }
