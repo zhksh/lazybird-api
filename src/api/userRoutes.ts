@@ -1,8 +1,7 @@
-import { Pool } from 'pg'
 import express from 'express'
 import { Request, Response } from 'express';
 import { authenticateUser, createUser, getUser } from '../service/user'
-import { HTTP_INTERNAL_ERROR, HTTP_SUCCESS } from './codes';
+import { HTTP_SUCCESS, pool, sendMappedError } from './common';
 import { BadRequestError } from '../errors';
 import { authenticate } from './middleware';
 import { Maybe } from 'monet';
@@ -103,14 +102,6 @@ userRouter.post('/:username/follow', async (req: Request, res: Response) => {
   sendMappedError(res, new BadRequestError('no valid follow query parameter was provid, please add ?follow=ture or ?follow=false'))
 })
 
-const pool = new Pool({
-  database: process.env.POSTGRES_DB ?? 'postgres',
-  host: process.env.POSTGRES_HOST ?? 'localhost',
-  user: process.env.POSTGRES_USER ?? 'postgres',
-  port: Number(process.env.POSTGRES_PORT) ?? 5432,
-  password: process.env.POSTGRES_PASSWORD ?? 'secret',
-})
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function validateSignUpRequest(body: any): Maybe<BadRequestError> {
   if (!body.username) {
@@ -139,17 +130,4 @@ function validateAuthRequest(body: any): Maybe<BadRequestError> {
   }
 
   return Maybe.None()
-}
-
-function sendMappedError(res: Response, err: Error, customMsg?: string) {
-  res.status(mapStatusCode(err)).send(customMsg ?? err.message)
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapStatusCode(err: any): number {
-  if (typeof err.status === 'function') {
-    return err.status
-  }
-
-  return HTTP_INTERNAL_ERROR
 }

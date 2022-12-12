@@ -1,5 +1,5 @@
 import express from 'express'
-import { HTTP_INTERNAL_ERROR, HTTP_SUCCESS } from './codes';
+import { HTTP_INTERNAL_ERROR, HTTP_SUCCESS } from './common';
 import {complete, createInContextPost} from "../service/postGeneraton";
 
 export const backendRouter = express.Router()

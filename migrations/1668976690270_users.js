@@ -32,6 +32,27 @@ exports.up = pgm => {
             primaryKey: true,
             notNull: true,
         },
+    }),
+    pgm.createTable('posts', {
+        id: {
+            type: 'text',
+            primaryKey: true,
+            notNull: true,
+            unique: true,
+        },
+        username: {
+            type: 'text',
+            notNull: true,
+            references: 'users',
+            onDelete: 'cascade'
+        },
+        content: { type: 'text', notNull: true },
+        is_ai: { type: 'boolean', notNull: true},
+        timestamp: {
+            type: 'timestamp',
+            notNull: true,
+            default: pgm.func('current_timestamp')
+        }
     })
 };
 
