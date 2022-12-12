@@ -25,16 +25,21 @@ exports.up = pgm => {
         username: {
             type: 'text',
             primaryKey: true,
+            references: 'users',
             notNull: true,
+            onDelete: 'cascade',
         },
         follows_username: {
             type: 'text',
             primaryKey: true,
+            references: 'users',
             notNull: true,
+            onDelete: 'cascade',
         },
     })
 };
 
 exports.down = pgm => {
+    pgm.dropTable('followers', {})
     pgm.dropTable('users', {})
 };
