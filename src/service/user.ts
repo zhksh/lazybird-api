@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt'
 import { Pool } from 'pg'
 import { SALT_ROUNDS } from '../env'
 import { AlreadyExistsError, NotFoundError, UnauthorizedError } from '../errors'
-import { getFollowersForUser, getSecretByUsername, getUserDetailsByUsername, storeUserDetails } from '../data/storage'
+import { getFollowersForUser, getSecretByUsername, getUserDetailsByUsername, storeFollowerRelation, storeUserDetails } from '../data/storage'
 import { encodeJWT } from './jwt'
 import { User, UserDetails } from '../data/models'
 

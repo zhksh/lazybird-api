@@ -2,10 +2,11 @@ import { Pool } from 'pg'
 import express from 'express'
 import { Request, Response } from 'express';
 import { authenticateUser, createUser, getUser } from '../service/user'
-import { HTTP_INTERNAL_ERROR } from './codes';
+import { HTTP_INTERNAL_ERROR, HTTP_SUCCESS } from './codes';
 import { BadRequestError } from '../errors';
 import { authenticate } from './middleware';
 import { Maybe } from 'monet';
+import { deleteFollowerRelation, storeFollowerRelation } from '../data/storage';
 
 /**
  * Defines all routes necessary for authorization. 
@@ -89,8 +90,24 @@ userRouter.get('/find', async (req: Request, res: Response) => {
 /** 
  * Follow the given user.
  */
- userRouter.post('/:username/follow', async (req: Request, res: Response) => {
-  throw 'Not implemented'
+userRouter.post('/:username/follow', async (req: Request, res: Response) => {
+  const username = req.body.username
+  const followsUsername = req.params.username
+  const shouldFollow = req.query.follow
+
+  if (shouldFollow === 'true') {
+    await storeFollowerRelation(pool, username, followsUsername)
+    res.send(HTTP_SUCCESS)
+    return
+  }
+
+  if (shouldFollow === 'false') {
+    await deleteFollowerRelation(pool, username, followsUsername)
+    res.send(HTTP_SUCCESS)
+    return
+  }
+
+  sendMappedError(res, new BadRequestError('no valid follow query parameter was provid, please add ?follow=ture or ?follow=false'))
 })
 
 const pool = new Pool({
