@@ -1,10 +1,11 @@
 import { Pool } from 'pg'
-import { Request, Response } from 'express';
 import express from 'express'
+import { Request, Response } from 'express';
 import { authenticateUser, createUser, getUser } from '../service/user'
-import { HTTP_ALREADY_EXISTS, HTTP_BAD_REQUEST, HTTP_INTERNAL_ERROR, HTTP_NOT_FOUND, HTTP_SUCCESS, HTTP_UNAUTHORIZED } from './codes';
-import { AlreadyExistsError, BadRequestError, NotFoundError, UnauthorizedError } from '../errors';
+import { HTTP_INTERNAL_ERROR } from './codes';
+import { BadRequestError } from '../errors';
 import { authenticate } from './middleware';
+import { Maybe } from 'monet';
 
 /**
  * Defines all routes necessary for authorization. 
@@ -23,9 +24,9 @@ userRouter.use(authenticate)
 authRouter.post('/', async (req: Request, res: Response) => {
   const body = req.body
   
-  const invalid = validateSignUpRequest(body)
-  if (invalid) {
-    sendError(res, invalid)
+  const err = validateSignUpRequest(body)
+  if (err.isSome()) {
+    sendMappedError(res, err.some())
     return
   }
 
@@ -37,13 +38,12 @@ authRouter.post('/', async (req: Request, res: Response) => {
 
   createUser(pool, details, body.password)
   .then(token => {
-    res.status(HTTP_SUCCESS)
-    .json({
+    res.json({
       accessToken: token,
       tokenType: 'Bearer',
     })
   })
-  .catch(err => sendError(res, err))
+  .catch(err => sendMappedError(res, err))
 })
 
 /** 
@@ -52,21 +52,20 @@ authRouter.post('/', async (req: Request, res: Response) => {
 authRouter.post('/auth', async (req: Request, res: Response) => {
   const body = req.body
   
-  const invalid = validateAuthRequest(body)
-  if (invalid) {
-    sendError(res, invalid)
+  const err = validateAuthRequest(body)
+  if (err.isSome()) {
+    sendMappedError(res, err.some())
     return
   }
 
   authenticateUser(pool, body.username, body.password)
   .then(token => {
-    res.status(HTTP_SUCCESS)
-    .json({
+    res.json({
       accessToken: token,
       tokenType: 'Bearer',
     })
   })
-  .catch(err => sendError(res, err))  
+  .catch(err => sendMappedError(res, err))  
 })
 
 /** 
@@ -75,14 +74,9 @@ authRouter.post('/auth', async (req: Request, res: Response) => {
 userRouter.get('/:username', async (req: Request, res: Response) => {
   const username = (req.params.username === 'me') ? req.body.username : req.params.username
   
-  const {err, user} = await getUser(pool, username)
-  if (err) {
-    sendError(res, err)
-    return
-  }
-
-  res.status(HTTP_SUCCESS)
-    .json(user)
+  getUser(pool, username)
+    .then(user => res.json(user))
+    .catch(err => sendMappedError(res, err))
 })
 
 /** 
@@ -107,50 +101,44 @@ const pool = new Pool({
   password: process.env.POSTGRES_PASSWORD ?? 'secret',
 })
 
-function validateSignUpRequest(body: any): Error | void {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function validateSignUpRequest(body: any): Maybe<BadRequestError> {
   if (!body.username) {
-    return new BadRequestError('username must not be empty')
+    return Maybe.Some(new BadRequestError('username must not be empty'))
   }
 
   if (!body.password) {
-    return new BadRequestError('password must not be empty')
+    return Maybe.Some(new BadRequestError('password must not be empty'))
   }
 
   if (!body.iconId) {
-    return new BadRequestError('iconId must not be empty')
+    return Maybe.Some(new BadRequestError('iconId must not be empty'))
   }
+
+  return Maybe.None()
 }
 
-function validateAuthRequest(body: any): Error | void {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function validateAuthRequest(body: any): Maybe<BadRequestError> {
   if (!body.username) {
-    return new BadRequestError('username must not be empty')
+    return Maybe.Some(new BadRequestError('username must not be empty'))
   }
 
   if (!body.password) {
-    return new BadRequestError('password must not be empty')
+    return Maybe.Some(new BadRequestError('password must not be empty'))
   }
+
+  return Maybe.None()
 }
 
-function sendError(res: Response, err: Error, customMsg?: string) {
+function sendMappedError(res: Response, err: Error, customMsg?: string) {
   res.status(mapStatusCode(err)).send(customMsg ?? err.message)
 }
 
-function mapStatusCode(err: Error): number {
-  // TODO: Think about moving mapping into Error classes
-  if (err instanceof AlreadyExistsError) {
-    return HTTP_ALREADY_EXISTS
-  }
-
-  if (err instanceof UnauthorizedError) {
-    return HTTP_UNAUTHORIZED
-  }
-
-  if (err instanceof BadRequestError) {
-    return HTTP_BAD_REQUEST
-  }
-
-  if (err instanceof NotFoundError) {
-    return HTTP_NOT_FOUND
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapStatusCode(err: any): number {
+  if (typeof err.status === 'function') {
+    return err.status
   }
 
   return HTTP_INTERNAL_ERROR

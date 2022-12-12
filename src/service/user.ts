@@ -29,10 +29,10 @@ export async function authenticateUser(pool: Pool, username: string, password: s
     throw new UnauthorizedError('incorrect password')
 }
 
-export async function getUser(pool: Pool, username: string): Promise<{err?: Error | NotFoundError, user?: User}> {
+export async function getUser(pool: Pool, username: string): Promise<User> {
     const userDetails = await getUserDetailsByUsername(pool, username)
     const followers = await getFollowersForUser(pool, username)
-    return {user: {...userDetails, followers: followers.length}}
+    return {...userDetails, followers: followers.length}
 }
 
 async function hashPassword(password: string): Promise<string> {
