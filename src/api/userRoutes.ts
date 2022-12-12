@@ -97,13 +97,13 @@ userRouter.post('/:username/follow', async (req: Request, res: Response) => {
 
   if (shouldFollow === 'true') {
     await storeFollowerRelation(pool, username, followsUsername)
-    res.send(HTTP_SUCCESS)
+    res.sendStatus(HTTP_SUCCESS)
     return
   }
 
   if (shouldFollow === 'false') {
     await deleteFollowerRelation(pool, username, followsUsername)
-    res.send(HTTP_SUCCESS)
+    res.sendStatus(HTTP_SUCCESS)
     return
   }
 

@@ -53,7 +53,7 @@ export async function getUserDetailsByUsername(pool: Pool, username: string): Pr
 
 export async function getFollowersForUser(pool: Pool, username: string): Promise<UserDetails[]> {
     const sql = 
-    `SELECT username, icon_id, display_name FROM users JOIN followers ON users.username = followers.follows_username WHERE follows_username = $1`
+    `SELECT users.username, icon_id, display_name FROM users JOIN followers ON users.username = followers.follows_username WHERE follows_username = $1`
     
     const result = await query(pool, sql, [username])
     return result.rows
