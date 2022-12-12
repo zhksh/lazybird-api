@@ -81,13 +81,6 @@ userRouter.get('/:username', async (req: Request, res: Response) => {
 })
 
 /** 
- * Find users given a search string.
- */
-userRouter.get('/find', async (req: Request, res: Response) => {
-  throw 'Not implemented'
-})
-
-/** 
  * Follow the given user.
  */
 userRouter.post('/:username/follow', async (req: Request, res: Response) => {
