@@ -15,16 +15,14 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
             return
         }
 
-        const {err, payload} = decodeJWT(token)
-
-        if (err) {
-            res.status(HTTP_UNAUTHORIZED).send('not authorized')
-            return
-        }
-
-        req.body.username = payload.username
-
-        next()
+        decodeJWT(token)
+        .cata(
+            () => { res.status(HTTP_UNAUTHORIZED).send('not authorized') },
+            payload => {
+                req.body.username = payload.username
+                next()
+            },
+        )
     } catch(e) {
         res.status(HTTP_UNAUTHORIZED).send('not authorized')
     }
