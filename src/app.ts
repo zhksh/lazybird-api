@@ -1,12 +1,13 @@
 import express from 'express'
 import errorhandler from 'errorhandler'
-import { userRouter } from './api/userRoutes'
+import { authRouter, userRouter } from './api/userRoutes'
 import { backendRouter } from './api/backendRoutes'
 import { PORT } from './env'
 
 const app = express()
 
 app.use(express.json())
+app.use('/users', authRouter)
 app.use('/users', userRouter)
 app.use('/generate', backendRouter)
 

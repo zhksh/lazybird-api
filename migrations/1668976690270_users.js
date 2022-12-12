@@ -3,14 +3,9 @@
 
 exports.up = pgm => {
     pgm.createTable('users', {
-        id: {
-            type: 'text',
-            primaryKey: true,
-            notNull: true,
-            unique: true,
-        },
         username: {
             type: 'text',
+            primaryKey: true,
             notNull: true,
             unique: true,
         },
@@ -24,6 +19,18 @@ exports.up = pgm => {
         },
         display_name: {
             type: 'text',
+        },
+    }),
+    pgm.createTable('followers', {
+        username: {
+            type: 'text',
+            primaryKey: true,
+            notNull: true,
+        },
+        follows_username: {
+            type: 'text',
+            primaryKey: true,
+            notNull: true,
         },
     })
 };

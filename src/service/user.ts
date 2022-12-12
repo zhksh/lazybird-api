@@ -1,56 +1,40 @@
 import bcrypt from 'bcrypt'
 import { Pool } from 'pg'
-import { v4 } from 'uuid'
 import { SALT_ROUNDS } from '../env'
-import { AlreadyExistsError, UnauthorizedError } from '../errors'
-import { getUserByUsername, storeUser } from '../storage/storage'
+import { AlreadyExistsError, NotFoundError, UnauthorizedError } from '../errors'
+import { getFollowersForUser, getSecretByUsername, getUserDetailsByUsername, storeFollowerRelation, storeUserDetails } from '../data/storage'
 import { encodeJWT } from './jwt'
+import { User, UserDetails } from '../data/models'
 
-export async function createUser(pool: Pool, username: string, password: string, iconId: string, displayName?: string): Promise<{err?: Error | AlreadyExistsError, token?: string}> {
-    const {hash, err} = await hashPassword(password)
-    if (err) {
-        return {err: err}
+export async function createUser(pool: Pool, userDetails: UserDetails, password: string): Promise<string> {
+    if (userDetails.username === 'me') {
+        throw new AlreadyExistsError('username \'me\' reserved. please use a differen username')
     }
 
-    const user = {
-        id: v4(),
-        username: username, 
-        secret: hash,
-        icon_id: iconId,
-        display_name: displayName,
-    }
+    const hash = await hashPassword(password)
 
-    const storeErr = await storeUser(pool, user)
-    if (storeErr) {
-        return {err: storeErr}
-    }
-
-    return encodeJWT({userId: user.id})
+    await storeUserDetails(pool, userDetails, hash)
+    
+    return encodeJWT({username: userDetails.username}).toPromise()
 }
 
-export async function authenticateUser(pool: Pool, username: string, password: string): Promise<{err?: Error | UnauthorizedError, token?: string}> {
-    const {user, err} = await getUserByUsername(pool, username)
-    if (err) {
-        return {err: err}
+export async function authenticateUser(pool: Pool, username: string, password: string): Promise<string> {
+    const secret = await getSecretByUsername(pool, username)
+    
+    const passwortIsCorrect = await bcrypt.compare(password, secret)
+    if (passwortIsCorrect) {
+        return encodeJWT({username: username}).toPromise()
     }
 
-    try {
-        const passwortIsCorrect = await bcrypt.compare(password, user.secret)
-        if (passwortIsCorrect) {
-            return encodeJWT({userId: user.id})
-        }
-
-        return {err: new UnauthorizedError('incorrect password')}
-    } catch(e) {
-        return {err: e}
-    }
+    throw new UnauthorizedError('incorrect password')
 }
 
-async function hashPassword(password: string): Promise<{ hash?: string; err?: Error }> {
-    try {
-        const hash = await bcrypt.hash(password, SALT_ROUNDS)
-        return {hash: hash}
-    } catch(e) {
-        return {err: e}
-    }
+export async function getUser(pool: Pool, username: string): Promise<User> {
+    const userDetails = await getUserDetailsByUsername(pool, username)
+    const followers = await getFollowersForUser(pool, username)
+    return {...userDetails, followers: followers.length}
+}
+
+async function hashPassword(password: string): Promise<string> {
+    return bcrypt.hash(password, SALT_ROUNDS)    
 }

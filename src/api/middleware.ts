@@ -3,7 +3,7 @@ import { HTTP_UNAUTHORIZED } from "./codes"
 import { decodeJWT } from '../service/jwt'
 
 /**
- * Middleware that checks for a JWT token and if one is present, decodes it and sets body.userId.
+ * Middleware that checks for a JWT token and if one is present, decodes it and sets body.username.
  * If the user is not authenticated, it returns a status 401.
  */
 export const authenticate = (req: Request, res: Response, next: NextFunction) => {
@@ -15,16 +15,14 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
             return
         }
 
-        const {err, payload} = decodeJWT(token)
-
-        if (err) {
-            res.status(HTTP_UNAUTHORIZED).send('not authorized')
-            return
-        }
-
-        req.body.userId = payload.userId
-
-        next()
+        decodeJWT(token)
+        .cata(
+            () => { res.status(HTTP_UNAUTHORIZED).send('not authorized') },
+            payload => {
+                req.body.username = payload.username
+                next()
+            },
+        )
     } catch(e) {
         res.status(HTTP_UNAUTHORIZED).send('not authorized')
     }

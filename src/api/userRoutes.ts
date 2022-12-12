@@ -1,81 +1,106 @@
 import { Pool } from 'pg'
-import { Request, Response } from 'express';
 import express from 'express'
-import { authenticateUser, createUser } from '../service/user'
-import { HTTP_ALREADY_EXISTS, HTTP_BAD_REQUEST, HTTP_INTERNAL_ERROR, HTTP_NOT_FOUND, HTTP_SUCCESS, HTTP_UNAUTHORIZED } from './codes';
-import { AlreadyExistsError, BadRequestError, NotFoundError, UnauthorizedError } from '../errors';
+import { Request, Response } from 'express';
+import { authenticateUser, createUser, getUser } from '../service/user'
+import { HTTP_INTERNAL_ERROR, HTTP_SUCCESS } from './codes';
+import { BadRequestError } from '../errors';
+import { authenticate } from './middleware';
+import { Maybe } from 'monet';
+import { deleteFollowerRelation, storeFollowerRelation } from '../data/storage';
 
+/**
+ * Defines all routes necessary for authorization. 
+ */
+export const authRouter = express.Router()
+
+/**
+ * Defines all users/ routes. Requires all requests to be authenticated.
+ */
 export const userRouter = express.Router()
+userRouter.use(authenticate)
 
 /**
  * Create a new user.
  */
-userRouter.post('/', async (req: Request, res: Response) => {
+authRouter.post('/', async (req: Request, res: Response) => {
   const body = req.body
   
-  const invalid = validateSignUpRequest(body)
-  if (invalid) {
-    sendError(res, invalid)
+  const err = validateSignUpRequest(body)
+  if (err.isSome()) {
+    sendMappedError(res, err.some())
     return
   }
 
-  const {err, token} = await createUser(pool, body.username, body.password, body.iconId, body.displayName)
-  if (err) {
-    sendError(res, err)
-    return
+  const details = {
+    username: body.username, 
+    icon_id: body.iconId, 
+    display_name: body.displayName,
   }
 
-  res.status(HTTP_SUCCESS)
-    .json({
+  createUser(pool, details, body.password)
+  .then(token => {
+    res.json({
       accessToken: token,
       tokenType: 'Bearer',
     })
+  })
+  .catch(err => sendMappedError(res, err))
 })
 
 /** 
  * Authenticate a user.
  */
-userRouter.post('/auth', async (req: Request, res: Response) => {
+authRouter.post('/auth', async (req: Request, res: Response) => {
   const body = req.body
   
-  const invalid = validateAuthRequest(body)
-  if (invalid) {
-    sendError(res, invalid)
+  const err = validateAuthRequest(body)
+  if (err.isSome()) {
+    sendMappedError(res, err.some())
     return
   }
 
-  const {err, token} = await authenticateUser(pool, body.username, body.password)
-  if (err) {
-    sendError(res, err)
-    return
-  }
-
-  res.status(HTTP_SUCCESS)
-    .json({
+  authenticateUser(pool, body.username, body.password)
+  .then(token => {
+    res.json({
       accessToken: token,
       tokenType: 'Bearer',
     })
-})
-
-/** 
- * Find users given a search string.
- */
- userRouter.get('/find', async (req: Request, res: Response) => {
-  throw 'Not implemented'
+  })
+  .catch(err => sendMappedError(res, err))  
 })
 
 /** 
  * Get the user with the given ID.
  */
- userRouter.get('/{id}', async (req: Request, res: Response) => {
-  throw 'Not implemented'
+userRouter.get('/:username', async (req: Request, res: Response) => {
+  const username = (req.params.username === 'me') ? req.body.username : req.params.username
+  
+  getUser(pool, username)
+    .then(user => res.json(user))
+    .catch(err => sendMappedError(res, err))
 })
 
 /** 
  * Follow the given user.
  */
- userRouter.post('/{id}/follow', async (req: Request, res: Response) => {
-  throw 'Not implemented'
+userRouter.post('/:username/follow', async (req: Request, res: Response) => {
+  const username = req.body.username
+  const followsUsername = req.params.username
+  const shouldFollow = req.query.follow
+
+  if (shouldFollow === 'true') {
+    await storeFollowerRelation(pool, username, followsUsername)
+    res.sendStatus(HTTP_SUCCESS)
+    return
+  }
+
+  if (shouldFollow === 'false') {
+    await deleteFollowerRelation(pool, username, followsUsername)
+    res.sendStatus(HTTP_SUCCESS)
+    return
+  }
+
+  sendMappedError(res, new BadRequestError('no valid follow query parameter was provid, please add ?follow=ture or ?follow=false'))
 })
 
 const pool = new Pool({
@@ -86,50 +111,44 @@ const pool = new Pool({
   password: process.env.POSTGRES_PASSWORD ?? 'secret',
 })
 
-function validateSignUpRequest(body: any): Error | void {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function validateSignUpRequest(body: any): Maybe<BadRequestError> {
   if (!body.username) {
-    return new BadRequestError('username must not be empty')
+    return Maybe.Some(new BadRequestError('username must not be empty'))
   }
 
   if (!body.password) {
-    return new BadRequestError('password must not be empty')
+    return Maybe.Some(new BadRequestError('password must not be empty'))
   }
 
   if (!body.iconId) {
-    return new BadRequestError('iconId must not be empty')
+    return Maybe.Some(new BadRequestError('iconId must not be empty'))
   }
+
+  return Maybe.None()
 }
 
-function validateAuthRequest(body: any): Error | void {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function validateAuthRequest(body: any): Maybe<BadRequestError> {
   if (!body.username) {
-    return new BadRequestError('username must not be empty')
+    return Maybe.Some(new BadRequestError('username must not be empty'))
   }
 
   if (!body.password) {
-    return new BadRequestError('password must not be empty')
+    return Maybe.Some(new BadRequestError('password must not be empty'))
   }
+
+  return Maybe.None()
 }
 
-function sendError(res: Response, err: Error, customMsg?: string) {
+function sendMappedError(res: Response, err: Error, customMsg?: string) {
   res.status(mapStatusCode(err)).send(customMsg ?? err.message)
 }
 
-function mapStatusCode(err: Error): number {
-  // TODO: Think about moving mapping into Error classes
-  if (err instanceof AlreadyExistsError) {
-    return HTTP_ALREADY_EXISTS
-  }
-
-  if (err instanceof UnauthorizedError) {
-    return HTTP_UNAUTHORIZED
-  }
-
-  if (err instanceof BadRequestError) {
-    return HTTP_BAD_REQUEST
-  }
-
-  if (err instanceof NotFoundError) {
-    return HTTP_NOT_FOUND
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapStatusCode(err: any): number {
+  if (typeof err.status === 'function') {
+    return err.status
   }
 
   return HTTP_INTERNAL_ERROR
