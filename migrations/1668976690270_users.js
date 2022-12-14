@@ -47,7 +47,7 @@ exports.up = pgm => {
             onDelete: 'cascade'
         },
         content: { type: 'text', notNull: true },
-        is_ai: { type: 'boolean', notNull: true},
+        auto_complete: { type: 'boolean', notNull: true},
         timestamp: {
             type: 'timestamp',
             notNull: true,

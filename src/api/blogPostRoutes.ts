@@ -34,22 +34,17 @@ postsRouter.post('/', async (req: Request, res: Response) => {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function parseGenerationParameters(body: any): Either<BadRequestError, GenerationParameters | undefined> {
-  if (!body.isAI) {
+  if (!body.shouldAutoComplete) {
     return Either.right(undefined)
   }
  
   if (!body.temperature) {
-    return Either.left(new BadRequestError('temperature must not be undefined if isAI = true'))
-  }
-
-  if (!body.mood) {
-    // TODO: Just set default value instead?
-    return Either.left(new BadRequestError('mood must not be undefined if isAI = true'))
+    return Either.left(new BadRequestError('temperature must not be undefined if shouldAutoComplete == true'))
   }
 
   const params = {
     temperature: body.temperature, // TODO: Check whether temperature is number
-    mood: body.mood,
+    mood: body.mood ?? 'neutral',
   }
 
   return Either.right(params)

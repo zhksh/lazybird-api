@@ -24,8 +24,8 @@ export async function storeFollowerRelation(pool: Pool, username: string, follow
 }
 
 export async function storePost(pool: Pool, post: PostContent, username: string) {
-    const sql = `INSERT INTO posts(id, username, content, is_ai, timestamp) VALUES ($1, $2, $3, $4, $5);`
-    const values = [post.id, username, post.content, post.is_ai, post.timestamp]
+    const sql = `INSERT INTO posts(id, username, content, auto_complete, timestamp) VALUES ($1, $2, $3, $4, $5);`
+    const values = [post.id, username, post.content, post.auto_complete, post.timestamp]
     await query(pool, sql, values)
 }
 

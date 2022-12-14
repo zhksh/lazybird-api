@@ -11,7 +11,7 @@ export interface User extends UserDetails {
 export interface PostContent {
     id: string
     content: string
-    is_ai: boolean
+    auto_complete: boolean
     timestamp: Date
 }
 

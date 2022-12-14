@@ -17,7 +17,7 @@ export async function createPost(pool: Pool, username: string, content: string, 
     const post: PostContent = {
         id: v4(),
         content: content,
-        is_ai: parameters !== undefined,
+        auto_complete: parameters !== undefined,
         timestamp: new Date(),
     }
     
