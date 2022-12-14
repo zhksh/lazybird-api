@@ -1,6 +1,6 @@
 import { Pool, QueryResult } from "pg";
 import { AlreadyExistsError, NotFoundError } from "../errors";
-import { Post, PostContent, UserDetails } from "./models";
+import { PostContent, UserDetails } from "./models";
 
 export async function storeUserDetails(pool: Pool, user: UserDetails, secret: string) {
     const sql = `INSERT INTO users(username, secret, icon_id, display_name) VALUES ($1, $2, $3, $4);`

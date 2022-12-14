@@ -1,7 +1,7 @@
 import express from 'express'
 import { Request, Response } from 'express';
 import { Either } from 'monet'
-import { GenerationParameters, Post } from '../data/models';
+import { GenerationParameters } from '../data/models';
 import { BadRequestError } from '../errors';
 import { createPost } from '../service/post';
 import { pool, sendMappedError } from './common';
@@ -19,13 +19,15 @@ postsRouter.use(authenticate)
 postsRouter.post('/', async (req: Request, res: Response) => {
   const body = req.body
   
+  // TODO: Validate request (content set)
+
   parseGenerationParameters(body)
   .cata(
     err => sendMappedError(res, err),
     params => {
       createPost(pool, body.username, body.content, params)
-      .then(post => res.json(post))
-      .catch(err => sendMappedError(res, err))
+        .then(post => res.json(post))
+        .catch(err => sendMappedError(res, err))
     }
   )
 })
@@ -41,6 +43,7 @@ function parseGenerationParameters(body: any): Either<BadRequestError, Generatio
   }
 
   if (!body.mood) {
+    // TODO: Just set default value instead?
     return Either.left(new BadRequestError('mood must not be undefined if isAI = true'))
   }
 

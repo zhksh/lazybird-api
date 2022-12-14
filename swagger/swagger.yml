@@ -416,8 +416,8 @@ components:
           type: string
           description: The content of the post.
         timestamp:
-          type: integer
-          description: Unix timestamp of the post creation.
+          type: string
+          description: Timestamp of the post creation.
         likes:
           type: integer
           description: The number of likes added to the comment.

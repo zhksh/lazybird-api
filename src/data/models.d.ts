@@ -18,7 +18,7 @@ export interface PostContent {
 export interface Post extends PostContent {
     user: User
     likes: number
-    comments: Comment[]
+    commentCount: number
 }
 
 export interface Comment {
