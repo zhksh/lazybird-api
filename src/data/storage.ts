@@ -1,6 +1,6 @@
 import { Pool, QueryResult } from "pg";
 import { AlreadyExistsError, NotFoundError } from "../errors";
-import { PostContent, UserDetails } from "./models";
+import { Post, PostContent, UserDetails } from "./models";
 
 export async function storeUserDetails(pool: Pool, user: UserDetails, secret: string) {
     const sql = `INSERT INTO users(username, secret, icon_id, display_name) VALUES ($1, $2, $3, $4);`
@@ -63,6 +63,50 @@ export async function getFollowersForUser(pool: Pool, username: string): Promise
     
     const result = await query(pool, sql, [username])
     return result.rows
+}
+
+export async function listPostContents(pool: Pool, limit: number, after?: Date, usernames?: string[]): Promise<Post[]>{
+    const conditions = []
+    
+    if (after) {
+        conditions.push('timestamp < $2')
+    }
+
+    if (usernames) {
+        conditions.push('posts.username IN ($3)')
+    }
+    
+    let where = ''
+    if (conditions.length > 0) {
+        where = 'WHERE' + conditions.join(' AND ')
+    }
+
+    const sql = 
+    `SELECT id, content, auto_complete, timestamp, users.username, icon_id, display_name 
+        FROM posts JOIN users ON users.username ${where} 
+        ORDER BY timestamp DESC 
+        LIMIT $1
+    `
+    const result = await query(pool, sql, [limit, after, usernames])
+    return result.rows.map(scanPost)
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function scanPost(row: any): Post {
+    return {
+        id: row.id,
+        content: row.content,
+        auto_complete: row.auto_complete,
+        timestamp: row.timestamp,
+        user: {
+            username: row.username,
+            icon_id: row.icon_id,
+            display_name: row.display_name,            
+            followers: 0,   // TODO: Use real followers or remove
+        },
+        commentCount: 0,    // TODO: Use actual comment count once implemented
+        likes: 0,           // TODO: Use actual likes once implemented
+    }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

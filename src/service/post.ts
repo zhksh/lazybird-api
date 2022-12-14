@@ -1,8 +1,10 @@
+import { Either } from 'monet'
 import fetch from 'node-fetch'
 import { Pool } from 'pg'
 import { v4 } from 'uuid'
-import { GenerationParameters, Post, PostContent } from '../data/models'
-import { storePost } from '../data/storage'
+import { postsRouter } from '../api/blogPostRoutes'
+import { GenerationParameters, PaginationParameters, Post, PostContent, PostFilter } from '../data/models'
+import { listPostContents, storePost } from '../data/storage'
 import { AUTOCOMPLETE_PATH, BACKEND_HOST } from '../env'
 import { getUser } from './user'
 
@@ -33,6 +35,25 @@ export async function createPost(pool: Pool, username: string, content: string, 
     }
 }
 
+export async function listPosts(pool: Pool, filter: PostFilter, pagination: PaginationParameters): Promise<{posts: Post[], nextPageToken: string}> {
+    const afterDate = decodePageToken(pagination.token)
+                        .leftMap(err => {throw err})
+                        .right()
+
+    const posts = await listPostContents(pool, pagination.size + 1, afterDate, filter.usernames)
+
+    let nextPageToken = ""
+    if (posts.length > pagination.size) {
+        const nextPageStart = posts.pop()
+        nextPageToken = encodePageToken(nextPageStart.timestamp)
+    }
+
+    return {
+        nextPageToken: nextPageToken,
+        posts: posts,
+    }
+}
+
 async function completePost(content: string, parameters: GenerationParameters): Promise<string> {
     const url = BACKEND_HOST + AUTOCOMPLETE_PATH
     
@@ -59,4 +80,16 @@ async function completePost(content: string, parameters: GenerationParameters): 
 
         return json.response
     })
+}
+
+function encodePageToken(date: Date): string {
+    throw 'not implemented'
+}
+
+function decodePageToken(token?: string): Either<Error, Date | undefined> {
+    if (!token) {
+        return Either.right(undefined)
+    }
+
+    throw 'not implemented'
 }

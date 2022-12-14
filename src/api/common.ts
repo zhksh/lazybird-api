@@ -1,6 +1,7 @@
 import { Response } from "express"
 import { Pool } from "pg"
 
+// TODO: Move pool to service level?
 export const pool = new Pool({
     database: process.env.POSTGRES_DB ?? 'postgres',
     host: process.env.POSTGRES_HOST ?? 'localhost',

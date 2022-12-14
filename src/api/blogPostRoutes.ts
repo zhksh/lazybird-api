@@ -1,9 +1,10 @@
 import express from 'express'
 import { Request, Response } from 'express';
 import { Either } from 'monet'
+import { json } from 'stream/consumers';
 import { GenerationParameters } from '../data/models';
 import { BadRequestError } from '../errors';
-import { createPost } from '../service/post';
+import { createPost, listPosts } from '../service/post';
 import { pool, sendMappedError } from './common';
 import { authenticate } from './middleware';
 
@@ -19,7 +20,10 @@ postsRouter.use(authenticate)
 postsRouter.post('/', async (req: Request, res: Response) => {
   const body = req.body
   
-  // TODO: Validate request (content set)
+  if (!body.content) {
+    sendMappedError(res, new BadRequestError('post content must not be empty'))
+    return
+  }
 
   parseGenerationParameters(body)
   .cata(
@@ -30,6 +34,21 @@ postsRouter.post('/', async (req: Request, res: Response) => {
         .catch(err => sendMappedError(res, err))
     }
   )
+})
+
+/**
+ * List posts.
+ */
+postsRouter.get('/', async (req: Request, res: Response) => {  
+  const filter = {usernames: req.body.usernames}
+  const pagination = {
+    size: req.body.pageSize ?? 25,  // TODO: Add maximum page size?
+    token: req.body.pageToken
+  }
+
+  listPosts(pool, filter, pagination)
+    .then(result => res.json(result))
+    .catch(err => sendMappedError(res, err))
 })
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
