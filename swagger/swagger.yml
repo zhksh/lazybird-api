@@ -349,9 +349,9 @@ components:
         content:
           type: string
           description: The content of the post provided by the user
-        isAI:
+        shouldAutoComplete:
           type: boolean
-          description: If true, the server uses the AI feature.
+          description: If true, the server uses the LM backend to autocomplete the post.
         autogenerateAnswers:
           type: boolean
           description: If true, the server will automatically generate comments on the post.
@@ -416,8 +416,8 @@ components:
           type: string
           description: The content of the post.
         timestamp:
-          type: integer
-          description: Unix timestamp of the post creation.
+          type: string
+          description: Timestamp of the post creation.
         likes:
           type: integer
           description: The number of likes added to the comment.

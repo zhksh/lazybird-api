@@ -1,6 +1,6 @@
 import { Pool, QueryResult } from "pg";
 import { AlreadyExistsError, NotFoundError } from "../errors";
-import { UserDetails } from "./models";
+import { PostContent, UserDetails } from "./models";
 
 export async function storeUserDetails(pool: Pool, user: UserDetails, secret: string) {
     const sql = `INSERT INTO users(username, secret, icon_id, display_name) VALUES ($1, $2, $3, $4);`
@@ -20,6 +20,12 @@ export async function storeFollowerRelation(pool: Pool, username: string, follow
     const values = [username, followsUsername]
 
     // TODO: Catch duplicate primary key error and omit to make function idempotent?
+    await query(pool, sql, values)
+}
+
+export async function storePost(pool: Pool, post: PostContent, username: string) {
+    const sql = `INSERT INTO posts(id, username, content, auto_complete, timestamp) VALUES ($1, $2, $3, $4, $5);`
+    const values = [post.id, username, post.content, post.auto_complete, post.timestamp]
     await query(pool, sql, values)
 }
 

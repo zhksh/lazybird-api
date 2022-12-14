@@ -1,5 +1,5 @@
 # BUILD STAGE
-FROM node:12-alpine as builder
+FROM node:19-alpine3.16 as builder
 WORKDIR /api
 COPY package*.json ./
 COPY tsconfig.json ./
@@ -9,7 +9,7 @@ COPY src ./src
 RUN npm run build
 
 # RUN STAGE
-FROM node:12-alpine
+FROM node:19-alpine3.16
 WORKDIR /api
 COPY package*.json ./
 RUN npm install 
