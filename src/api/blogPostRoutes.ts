@@ -4,7 +4,7 @@ import { Either } from 'monet'
 import { json } from 'stream/consumers';
 import { GenerationParameters } from '../data/models';
 import { BadRequestError } from '../errors';
-import { createPost, listPosts } from '../service/post';
+import { createPost, queryPosts } from '../service/post';
 import { pool, sendMappedError } from './common';
 import { authenticate } from './middleware';
 
@@ -46,7 +46,7 @@ postsRouter.get('/', async (req: Request, res: Response) => {
     token: req.body.pageToken
   }
 
-  listPosts(pool, filter, pagination)
+  queryPosts(pool, filter, pagination)
     .then(result => res.json(result))
     .catch(err => sendMappedError(res, err))
 })

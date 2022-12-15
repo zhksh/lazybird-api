@@ -2,10 +2,10 @@ import { Either } from 'monet'
 import fetch from 'node-fetch'
 import { Pool } from 'pg'
 import { v4 } from 'uuid'
-import { postsRouter } from '../api/blogPostRoutes'
 import { GenerationParameters, PaginationParameters, Post, PostContent, PostFilter } from '../data/models'
-import { listPostContents, storePost } from '../data/storage'
+import { queryPosts, storePost } from '../data/storage'
 import { AUTOCOMPLETE_PATH, BACKEND_HOST } from '../env'
+import { BadRequestError } from '../errors'
 import { getUser } from './user'
 
 export async function createPost(pool: Pool, username: string, content: string, parameters?: GenerationParameters): Promise<Post> {
@@ -40,7 +40,7 @@ export async function listPosts(pool: Pool, filter: PostFilter, pagination: Pagi
                         .leftMap(err => {throw err})
                         .right()
 
-    const posts = await listPostContents(pool, pagination.size + 1, afterDate, filter.usernames)
+    const posts = await queryPosts(pool, pagination.size + 1, afterDate, filter.usernames)
 
     let nextPageToken = ""
     if (posts.length > pagination.size) {
@@ -83,13 +83,18 @@ async function completePost(content: string, parameters: GenerationParameters): 
 }
 
 function encodePageToken(date: Date): string {
-    throw 'not implemented'
+    return date.toUTCString()
 }
 
-function decodePageToken(token?: string): Either<Error, Date | undefined> {
+function decodePageToken(token?: string): Either<BadRequestError, Date | undefined> {
     if (!token) {
         return Either.right(undefined)
     }
 
-    throw 'not implemented'
+    const timestamp = Date.parse(token)
+    if (isNaN(timestamp)) {
+        return Either.left(new BadRequestError('invalid pageToken'))
+    }
+
+    return Either.right(new Date(timestamp))
 }

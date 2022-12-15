@@ -65,9 +65,10 @@ export async function getFollowersForUser(pool: Pool, username: string): Promise
     return result.rows
 }
 
-export async function listPostContents(pool: Pool, limit: number, after?: Date, usernames?: string[]): Promise<Post[]>{
+export async function queryPosts(pool: Pool, limit: number, after?: Date, usernames?: string[]): Promise<Post[]>{
     const conditions = []
     
+    // TODO: Refactor me
     if (after) {
         conditions.push('timestamp < $2')
     }
