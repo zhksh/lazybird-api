@@ -66,29 +66,36 @@ export async function getFollowersForUser(pool: Pool, username: string): Promise
 }
 
 export async function queryPosts(pool: Pool, limit: number, after?: Date, usernames?: string[]): Promise<Post[]>{
-    const conditions = []
-    
     // TODO: Refactor me
+    const values = []
+    const conditions = []
+    let param = 1
+    
     if (after) {
-        conditions.push('timestamp < $2')
+        conditions.push(`timestamp < $${param++}`)
+        values.push(after)
     }
 
     if (usernames) {
-        conditions.push('posts.username IN ($3)')
+        conditions.push(`posts.username IN ($${param++})`)
+        values.push(usernames)
     }
     
     let where = ''
     if (conditions.length > 0) {
-        where = 'WHERE' + conditions.join(' AND ')
+        where = 'WHERE ' + conditions.join(' AND ')
     }
+
+    values.push(limit)
 
     const sql = 
     `SELECT id, content, auto_complete, timestamp, users.username, icon_id, display_name 
-        FROM posts JOIN users ON users.username ${where} 
+        FROM posts JOIN users ON posts.username = users.username ${where} 
         ORDER BY timestamp DESC 
-        LIMIT $1
+        LIMIT $${param++}
     `
-    const result = await query(pool, sql, [limit, after, usernames])
+
+    const result = await query(pool, sql, values)
     return result.rows.map(scanPost)
 }
 

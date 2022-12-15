@@ -44,8 +44,8 @@ export async function listPosts(pool: Pool, filter: PostFilter, pagination: Pagi
 
     let nextPageToken = ""
     if (posts.length > pagination.size) {
-        const nextPageStart = posts.pop()
-        nextPageToken = encodePageToken(nextPageStart.timestamp)
+        posts.pop()
+        nextPageToken = encodePageToken(posts[posts.length - 1].timestamp)
     }
 
     return {
