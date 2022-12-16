@@ -1,9 +1,9 @@
 import express from 'express'
 import { Request, Response } from 'express';
 import { Either } from 'monet'
-import { GenerationParameters } from '../data/models';
+import { GenerationParameters, Post, PostFilter } from '../data/models';
 import { BadRequestError } from '../errors';
-import { createPost } from '../service/post';
+import { createPost, listPosts, listUserFeed } from '../service/post';
 import { pool, sendMappedError } from './common';
 import { authenticate } from './middleware';
 
@@ -19,7 +19,10 @@ postsRouter.use(authenticate)
 postsRouter.post('/', async (req: Request, res: Response) => {
   const body = req.body
   
-  // TODO: Validate request (content set)
+  if (!body.content) {
+    sendMappedError(res, new BadRequestError('post content must not be empty'))
+    return
+  }
 
   parseGenerationParameters(body)
   .cata(
@@ -30,6 +33,28 @@ postsRouter.post('/', async (req: Request, res: Response) => {
         .catch(err => sendMappedError(res, err))
     }
   )
+})
+
+/**
+ * List posts.
+ */
+postsRouter.get('/', async (req: Request, res: Response) => {  
+  const pagination = {
+    size: parsePageSize(req.body),
+    token: req.body.pageToken,
+  }
+  const filter = parsePostFilter(req.body)
+
+  let result: Promise<{posts: Post[], nextPageToken: string}>
+  if (req.body.isUserFeed) {
+    result = listUserFeed(pool, req.body.username, filter, pagination)
+  } else {
+    result = listPosts(pool, filter, pagination)
+  }
+
+  result
+    .then(got => res.json(got))
+    .catch(err => sendMappedError(res, err))
 })
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -43,9 +68,29 @@ function parseGenerationParameters(body: any): Either<BadRequestError, Generatio
   }
 
   const params = {
-    temperature: body.temperature, // TODO: Check whether temperature is number
+    temperature: body.temperature, // TODO: Check whether temperature is number?
     mood: body.mood ?? 'neutral',
   }
 
   return Either.right(params)
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function parsePostFilter(body: any): PostFilter {
+  if (body.usernames) {
+    return {
+      usernames: body.usernames.map((username:string) => username === 'me' ? body.username : username),
+    }
+  }
+
+  return {}
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function parsePageSize(body: any): number {
+  if (!body.pageSize || body.pageSize <= 0) {
+    return 25
+  }
+
+  return Math.min(body.pageSize,100)
 }

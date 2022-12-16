@@ -23,6 +23,8 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
                 next()
             },
         )
+
+        // TODO: Check if user actually exists?
     } catch(e) {
         res.status(HTTP_UNAUTHORIZED).send('not authorized')
     }

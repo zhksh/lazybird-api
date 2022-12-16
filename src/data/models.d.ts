@@ -31,3 +31,12 @@ export interface GenerationParameters {
     mood: string
     temperature: number
 }
+
+export interface PostFilter {
+    usernames?: string[]
+}
+
+export interface PaginationParameters {
+    size: number
+    token?: string
+}

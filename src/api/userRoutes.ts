@@ -104,6 +104,8 @@ userRouter.post('/:username/follow', async (req: Request, res: Response) => {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function validateSignUpRequest(body: any): Maybe<BadRequestError> {
+  // TODO: Refactor, use schema.validate?
+  
   if (!body.username) {
     return Maybe.Some(new BadRequestError('username must not be empty'))
   }
