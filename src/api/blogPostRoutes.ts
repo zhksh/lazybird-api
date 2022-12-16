@@ -1,7 +1,7 @@
 import express from 'express'
 import { Request, Response } from 'express';
 import { Either } from 'monet'
-import { GenerationParameters } from '../data/models';
+import { GenerationParameters, PostFilter } from '../data/models';
 import { BadRequestError } from '../errors';
 import { createPost, listPosts } from '../service/post';
 import { pool, sendMappedError } from './common';
@@ -39,13 +39,10 @@ postsRouter.post('/', async (req: Request, res: Response) => {
  * List posts.
  */
 postsRouter.get('/', async (req: Request, res: Response) => {  
-  // TODO: Replace me with body.username
-  // TODO: Implement is userFeed
-
-  const filter = {usernames: req.body.usernames}
+  const filter = parsePostFilter(req.body)
   const pagination = {
-    size: req.body.pageSize ?? 25,  // TODO: Add maximum page size?
-    token: req.body.pageToken
+    size: parsePageSize(req.body),
+    token: req.body.pageToken,
   }
 
   listPosts(pool, filter, pagination)
@@ -69,4 +66,26 @@ function parseGenerationParameters(body: any): Either<BadRequestError, Generatio
   }
 
   return Either.right(params)
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function parsePostFilter(body: any): PostFilter {
+  // TODO: Implement is userFeed
+  
+  if (body.usernames) {
+    return {
+      usernames: body.usernames.map((username:string) => username === 'me' ? body.username : username),
+    }
+  }
+
+  return {}
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function parsePageSize(body: any): number {
+  if (!body.pageSize || body.pageSize <= 0) {
+    return 25
+  }
+
+  return Math.min(body.pageSize,100)
 }

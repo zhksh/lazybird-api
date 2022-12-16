@@ -11,15 +11,18 @@ npm i
 
 Then run the server using:
 ```
-npm run start
+npm run dev
 ```
+
+Running the project locally requires a postgres database running on port `5432` with the migration setup (`npm run migrate up`).
 
 ### Option 2: Run project using docker-compose
 Requires installation of [Docker](https://docs.docker.com/). 
 Simply run the following command to build and run the Node server and all dependencies:
 ```shell
-docker-compose up
+npm run start
 ```
+This includes a postgres database instance. However, `npm run migrate up` still needs to be executed on an empty database.
 
 ### Database migrations
 A [migration tool](https://salsita.github.io/node-pg-migrate/#/) is used to setup the postgres database.
