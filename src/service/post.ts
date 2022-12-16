@@ -3,7 +3,7 @@ import fetch from 'node-fetch'
 import { Pool } from 'pg'
 import { v4 } from 'uuid'
 import { GenerationParameters, PaginationParameters, Post, PostContent, PostFilter } from '../data/models'
-import { queryPosts, storePost } from '../data/storage'
+import { getFollowedUsernames, queryPosts, storePost } from '../data/storage'
 import { AUTOCOMPLETE_PATH, BACKEND_HOST } from '../env'
 import { BadRequestError } from '../errors'
 import { getUser } from './user'
@@ -52,6 +52,17 @@ export async function listPosts(pool: Pool, filter: PostFilter, pagination: Pagi
         nextPageToken: nextPageToken,
         posts: posts,
     }
+}
+
+export async function listUserFeed(pool: Pool, username: string, filter:PostFilter, pagination: PaginationParameters): Promise<{posts: Post[], nextPageToken: string}> {
+    // TODO: Test me
+    let followed = await getFollowedUsernames(pool, username)
+
+    if (filter.usernames) {
+        followed = followed.filter(username => filter.usernames.includes(username))
+    }
+
+    return listPosts(pool, { usernames: followed }, pagination)
 }
 
 async function completePost(content: string, parameters: GenerationParameters): Promise<string> {

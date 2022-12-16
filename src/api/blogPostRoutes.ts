@@ -1,9 +1,9 @@
 import express from 'express'
 import { Request, Response } from 'express';
 import { Either } from 'monet'
-import { GenerationParameters, PostFilter } from '../data/models';
+import { GenerationParameters, Post, PostFilter } from '../data/models';
 import { BadRequestError } from '../errors';
-import { createPost, listPosts } from '../service/post';
+import { createPost, listPosts, listUserFeed } from '../service/post';
 import { pool, sendMappedError } from './common';
 import { authenticate } from './middleware';
 
@@ -39,14 +39,21 @@ postsRouter.post('/', async (req: Request, res: Response) => {
  * List posts.
  */
 postsRouter.get('/', async (req: Request, res: Response) => {  
-  const filter = parsePostFilter(req.body)
   const pagination = {
     size: parsePageSize(req.body),
     token: req.body.pageToken,
   }
+  const filter = parsePostFilter(req.body)
 
-  listPosts(pool, filter, pagination)
-    .then(result => res.json(result))
+  let result: Promise<{posts: Post[], nextPageToken: string}>
+  if (req.body.isUserFeed) {
+    result = listUserFeed(pool, req.username, filter, pagination)
+  } else {
+    result = listPosts(pool, filter, pagination)
+  }
+
+  result
+    .then(got => res.json(got))
     .catch(err => sendMappedError(res, err))
 })
 
@@ -61,7 +68,7 @@ function parseGenerationParameters(body: any): Either<BadRequestError, Generatio
   }
 
   const params = {
-    temperature: body.temperature, // TODO: Check whether temperature is number
+    temperature: body.temperature, // TODO: Check whether temperature is number?
     mood: body.mood ?? 'neutral',
   }
 
@@ -70,8 +77,6 @@ function parseGenerationParameters(body: any): Either<BadRequestError, Generatio
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function parsePostFilter(body: any): PostFilter {
-  // TODO: Implement is userFeed
-  
   if (body.usernames) {
     return {
       usernames: body.usernames.map((username:string) => username === 'me' ? body.username : username),
