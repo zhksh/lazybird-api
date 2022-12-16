@@ -1,10 +1,9 @@
 import express from 'express'
 import { Request, Response } from 'express';
 import { Either } from 'monet'
-import { json } from 'stream/consumers';
 import { GenerationParameters } from '../data/models';
 import { BadRequestError } from '../errors';
-import { createPost, queryPosts } from '../service/post';
+import { createPost, listPosts } from '../service/post';
 import { pool, sendMappedError } from './common';
 import { authenticate } from './middleware';
 
@@ -40,13 +39,16 @@ postsRouter.post('/', async (req: Request, res: Response) => {
  * List posts.
  */
 postsRouter.get('/', async (req: Request, res: Response) => {  
+  // TODO: Replace me with body.username
+  // TODO: Implement is userFeed
+
   const filter = {usernames: req.body.usernames}
   const pagination = {
     size: req.body.pageSize ?? 25,  // TODO: Add maximum page size?
     token: req.body.pageToken
   }
 
-  queryPosts(pool, filter, pagination)
+  listPosts(pool, filter, pagination)
     .then(result => res.json(result))
     .catch(err => sendMappedError(res, err))
 })

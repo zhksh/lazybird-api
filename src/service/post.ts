@@ -40,7 +40,7 @@ export async function listPosts(pool: Pool, filter: PostFilter, pagination: Pagi
                         .leftMap(err => {throw err})
                         .right()
 
-    const posts = await queryPosts(pool, pagination.size + 1, afterDate, filter.usernames)
+    const posts = await queryPosts(pool, pagination.size + 1, { after: afterDate, usernames: filter.usernames })
 
     let nextPageToken = ""
     if (posts.length > pagination.size) {
@@ -83,7 +83,8 @@ async function completePost(content: string, parameters: GenerationParameters): 
 }
 
 function encodePageToken(date: Date): string {
-    return date.toUTCString()
+    // TODO: Also encrypt or encode more?
+    return date.toISOString()
 }
 
 function decodePageToken(token?: string): Either<BadRequestError, Date | undefined> {
