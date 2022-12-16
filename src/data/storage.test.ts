@@ -1,8 +1,7 @@
-import { expect, assert, use } from 'chai'
-import { v4 } from 'uuid';
+import { assert } from 'chai'
 import 'mocha'
 import { Pool } from 'pg'
-import { Post, PostContent, UserDetails } from './models';
+import { Post, UserDetails } from './models';
 import { queryPosts, storePost, storeUserDetails } from './storage'
 import migrate from 'node-pg-migrate'
 
@@ -20,26 +19,49 @@ before(async () => {
 
 after(async () => {
   teardownTestingDatabase()
+  .catch(err => console.error('failed to teardown database', err))
 })
 
-describe('list', function() {
-  it('happy path', async function() {
+describe('queryPosts', function() {
+  it('after filter works as expected', async function() {
     try {
-      const page1 = await queryPosts(pool, 2)
-      const page2 = await queryPosts(pool, 2, samplePosts[1].timestamp)
-      const got = page1.concat(page2)
-      
-      assert.deepEqual(got, samplePosts)
+      const got = await queryPosts(pool, 2, { after: samplePosts[1].timestamp })
+      const want = [samplePosts[2], samplePosts[3]]
+      assert.deepEqual(got, want)
     } catch(e) {
       assert.fail(e)
     }
-  }); 
+  });
+  it('user filter works as expected', async function() {
+    try {
+      const got = await queryPosts(pool, 2, { usernames: [sampleUser1.username] })      
+      const want = [samplePosts[0], samplePosts[2]]
+      assert.deepEqual(got, want)
+    } catch(e) {
+      assert.fail(e)
+    }
+  });
+  it('user and after filter work together as expected', async function() {
+    try {
+      const got = await queryPosts(pool, 2, { after: samplePosts[1].timestamp, usernames: [sampleUser1.username] })      
+      const want = [samplePosts[2]]
+      assert.deepEqual(got, want)
+    } catch(e) {
+      assert.fail(e)
+    }
+  });
 });
 
-const sampleUser: UserDetails = {  
+const sampleUser1: UserDetails = {  
   icon_id: '1',
   username: 'Biggus',
   display_name: 'Dickus'
+}
+
+const sampleUser2: UserDetails = {  
+  icon_id: '2',
+  username: 'Chuck',
+  display_name: 'Chuck Norris'
 }
 
 const samplePosts: Post[] = [
@@ -51,7 +73,7 @@ const samplePosts: Post[] = [
     commentCount: 0,
     likes: 0,
     user: {
-      ...sampleUser,
+      ...sampleUser1,
       followers: 0,
     }
   },
@@ -63,7 +85,7 @@ const samplePosts: Post[] = [
     commentCount: 0,
     likes: 0,
     user: {
-      ...sampleUser,
+      ...sampleUser2,
       followers: 0,
     }
   },
@@ -75,7 +97,7 @@ const samplePosts: Post[] = [
     commentCount: 0,
     likes: 0,
     user: {
-      ...sampleUser,
+      ...sampleUser1,
       followers: 0,
     }
   },
@@ -87,7 +109,7 @@ const samplePosts: Post[] = [
     commentCount: 0,
     likes: 0,
     user: {
-      ...sampleUser,
+      ...sampleUser2,
       followers: 0,
     }
   },
@@ -95,9 +117,10 @@ const samplePosts: Post[] = [
 
 async function writeTestData() {
   try {
-    await storeUserDetails(pool, sampleUser, 'secret')
+    await storeUserDetails(pool, sampleUser1, 'secret')
+    await storeUserDetails(pool, sampleUser2, 'secret')
     samplePosts.forEach(async (post) => {
-      await storePost(pool, post, sampleUser.username)
+      await storePost(pool, post, post.user.username)
     })
   } catch(e) {
     assert.fail(e)
@@ -128,7 +151,9 @@ async function createTestingDatabase() {
 }
 
 async function teardownTestingDatabase() {
-  await pool.query(`DROP DATABASE ${databaseName}`)
+  await pool.end()
+  const mainPool = new Pool(defaultConfig());
+  await mainPool.query(`DROP DATABASE ${databaseName}`)
 }
 
 function randomDBname(length: number): string {

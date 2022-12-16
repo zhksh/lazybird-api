@@ -65,22 +65,24 @@ export async function getFollowersForUser(pool: Pool, username: string): Promise
     return result.rows
 }
 
-export async function queryPosts(pool: Pool, limit: number, after?: Date, usernames?: string[]): Promise<Post[]>{
+export async function queryPosts(pool: Pool, limit: number, filter?: {after?: Date, usernames?: string[]}): Promise<Post[]>{
     // TODO: Refactor me
     const values = []
     const conditions = []
     let param = 1
+
+    if (filter) {
+        if (filter.after) {
+            conditions.push(`timestamp < $${param++}`)
+            values.push(filter.after)
+        }
     
-    if (after) {
-        conditions.push(`timestamp < $${param++}`)
-        values.push(after)
+        if (filter.usernames) {
+            conditions.push(`posts.username = ANY($${param++}::text[])`)
+            values.push(filter.usernames)
+        }
     }
 
-    if (usernames) {
-        conditions.push(`posts.username IN ($${param++})`)
-        values.push(usernames)
-    }
-    
     let where = ''
     if (conditions.length > 0) {
         where = 'WHERE ' + conditions.join(' AND ')
