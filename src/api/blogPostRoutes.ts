@@ -47,7 +47,7 @@ postsRouter.get('/', async (req: Request, res: Response) => {
 
   let result: Promise<{posts: Post[], nextPageToken: string}>
   if (req.body.isUserFeed) {
-    result = listUserFeed(pool, req.username, filter, pagination)
+    result = listUserFeed(pool, req.body.username, filter, pagination)
   } else {
     result = listPosts(pool, filter, pagination)
   }

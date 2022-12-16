@@ -55,8 +55,10 @@ export async function listPosts(pool: Pool, filter: PostFilter, pagination: Pagi
 }
 
 export async function listUserFeed(pool: Pool, username: string, filter:PostFilter, pagination: PaginationParameters): Promise<{posts: Post[], nextPageToken: string}> {
-    // TODO: Test me
     let followed = await getFollowedUsernames(pool, username)
+    followed.push(username)
+
+    console.log(followed)
 
     if (filter.usernames) {
         followed = followed.filter(username => filter.usernames.includes(username))

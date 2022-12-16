@@ -2,7 +2,7 @@ import { assert } from 'chai'
 import 'mocha'
 import { Pool } from 'pg'
 import { Post, UserDetails } from './models';
-import { queryPosts, storePost, storeUserDetails } from './storage'
+import { getFollowedUsernames, queryPosts, storeFollowerRelation, storePost, storeUserDetails } from './storage'
 import migrate from 'node-pg-migrate'
 
 let pool: Pool
@@ -51,6 +51,28 @@ describe('queryPosts', function() {
     }
   });
 });
+
+describe('getFollowedUsernames', function() {
+  it('happy path', async function() {
+    try {
+      const got = await getFollowedUsernames(pool, sampleUser1.username)
+      const want = [sampleUser2.username]
+      assert.deepEqual(got, want)
+    } catch(e) {
+      assert.fail(e)
+    }
+  });
+  it('empty response', async function() {
+    try {
+      const got = await getFollowedUsernames(pool, sampleUser2.username)
+      const want = []
+      assert.deepEqual(got, want)
+    } catch(e) {
+      assert.fail(e)
+    }
+  });
+});
+
 
 const sampleUser1: UserDetails = {  
   icon_id: '1',
@@ -119,6 +141,7 @@ async function writeTestData() {
   try {
     await storeUserDetails(pool, sampleUser1, 'secret')
     await storeUserDetails(pool, sampleUser2, 'secret')
+    await storeFollowerRelation(pool, sampleUser1.username, sampleUser2.username)
     samplePosts.forEach(async (post) => {
       await storePost(pool, post, post.user.username)
     })

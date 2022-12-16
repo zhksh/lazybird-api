@@ -70,9 +70,9 @@ export async function getFollowersForUser(pool: Pool, username: string): Promise
  * @returns string array of all usernames the given user follows
  */
 export async function getFollowedUsernames(pool: Pool, username: string): Promise<string[]> {
-    const sql = `SELECT username FROM followers WHERE follows_username = $1`
+    const sql = `SELECT follows_username FROM followers WHERE username = $1`
     const result = await query(pool, sql, [username])
-    return result.rows.map(row => row.username)
+    return result.rows.map(row => row.follows_username)
 }
 
 export async function queryPosts(pool: Pool, limit: number, filter?: {after?: Date, usernames?: string[]}): Promise<Post[]>{
