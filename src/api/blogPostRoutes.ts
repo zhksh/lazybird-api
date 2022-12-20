@@ -69,7 +69,7 @@ postsRouter.post('/:id/comments', async (req: Request, res: Response) => {
   }
   
   createComment(pool, {
-    postId: req.params.id,  // TODO: check if id is always valid
+    postId: req.params.id,
     username: req.body.username,
     content: req.body.content,
   })

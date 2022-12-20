@@ -115,27 +115,23 @@ export async function getFollowedUsernames(pool: Pool, username: string): Promis
 }
 
 export async function queryPosts(pool: Pool, limit: number, filter?: {after?: Date, usernames?: string[]}): Promise<Post[]>{
-    // TODO: Refactor me
     const values = []
     const conditions = []
-    let param = 1
-
+    let argument = 1
+    
     if (filter) {
         if (filter.after) {
-            conditions.push(`timestamp < $${param++}`)
+            conditions.push(`timestamp < $${argument++}`)
             values.push(filter.after)
         }
     
         if (filter.usernames) {
-            conditions.push(`posts.username = ANY($${param++}::text[])`)
+            conditions.push(`posts.username = ANY($${argument++}::text[])`)
             values.push(filter.usernames)
         }
     }
 
-    let where = ''
-    if (conditions.length > 0) {
-        where = 'WHERE ' + conditions.join(' AND ')
-    }
+    const where = buildWhereClause(conditions)
 
     values.push(limit)
 
@@ -143,7 +139,7 @@ export async function queryPosts(pool: Pool, limit: number, filter?: {after?: Da
     `SELECT id, content, auto_complete, timestamp, users.username, icon_id, display_name 
         FROM posts JOIN users ON posts.username = users.username ${where} 
         ORDER BY timestamp DESC 
-        LIMIT $${param++}
+        LIMIT $${argument++}
     `
 
     const result = await query(pool, sql, values)
@@ -188,4 +184,12 @@ function isForeignKeyError(err: any): boolean {
 async function query(pool: Pool, sql: string, values?: any[]): Promise<QueryResult<any>> {
     const client = await pool.connect()
     return client.query(sql, values).finally(() => client.release())
+}
+
+function buildWhereClause(conditions: string[]): string {
+    if (conditions.length > 0) {
+        return 'WHERE ' + conditions.join(' AND ')
+    }
+    
+    return ''
 }

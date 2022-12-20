@@ -7,6 +7,7 @@ export interface Payload {
 }
 
 export function encodeJWT(payload: Payload): Either<Error, string> {
+    // TODO: Add refresh token?
     try {
         const token = jwt.sign(payload, JWT_SECRET_KEY)
         return Either.right(token)
