@@ -2,9 +2,10 @@ import express from 'express'
 import { Request, Response } from 'express';
 import { Either } from 'monet'
 import { GenerationParameters, Post, PostFilter } from '../data/models';
-import { getFollowedUsernames } from '../data/storage';
+import { deleteLikeRelation, getFollowedUsernames, storeLikeRelation } from '../data/storage';
 import { BadRequestError } from '../errors';
 import { createComment, createPost, listPosts, listUserFeed } from '../service/post';
+import { HTTP_SUCCESS } from './codes';
 import { pool, sendMappedError } from './common';
 import { authenticate } from './middleware';
 
@@ -72,8 +73,35 @@ postsRouter.post('/:id/comments', async (req: Request, res: Response) => {
     username: req.body.username,
     content: req.body.content,
   })
-  .then(() => res.status(200).end())
+  .then(() => res.sendStatus(HTTP_SUCCESS))
   .catch(err => sendMappedError(res, err))
+})
+
+/**
+ * Like or unlike a post.
+ */
+postsRouter.post('/:id/likes', async (req: Request, res: Response) => {  
+  const username = req.body.username
+  const postId = req.params.id
+  const shouldLike = req.query.like
+
+  try {
+    if (shouldLike === 'true') {
+      await storeLikeRelation(pool, username, postId)
+      res.sendStatus(HTTP_SUCCESS)
+      return
+    }
+  
+    if (shouldLike === 'false') {
+      await deleteLikeRelation(pool, username, postId)
+      res.sendStatus(HTTP_SUCCESS)
+      return
+    }
+   
+    sendMappedError(res, new BadRequestError('no valid like query parameter was provid, please add ?like=ture or ?like=false'))
+  } catch (e) {
+    sendMappedError(res, e)
+  }
 })
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

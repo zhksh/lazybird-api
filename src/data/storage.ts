@@ -23,6 +23,12 @@ export async function storeFollowerRelation(pool: Pool, username: string, follow
     await query(pool, sql, values)
 }
 
+export async function deleteFollowerRelation(pool: Pool, username: string, followsUsername: string) {
+    const sql = `DELETE FROM followers WHERE username = $1 AND follows_username = $2;`
+    const values = [username, followsUsername]
+    await query(pool, sql, values)
+}
+
 export async function storePost(pool: Pool, post: PostContent, username: string) {
     const sql = `INSERT INTO posts(id, username, content, auto_complete, timestamp) VALUES ($1, $2, $3, $4, $5);`
     const values = [post.id, username, post.content, post.auto_complete, post.timestamp]
@@ -42,9 +48,17 @@ export async function storeComment(pool: Pool, comment: {id: string, username: s
         })
 }
 
-export async function deleteFollowerRelation(pool: Pool, username: string, followsUsername: string) {
-    const sql = `DELETE FROM followers WHERE username = $1 AND follows_username = $2;`
-    const values = [username, followsUsername]
+export async function storeLikeRelation(pool: Pool, username: string, postId: string) {
+    const sql = `INSERT INTO likes(username, post_id) VALUES ($1, $2);`
+    const values = [username, postId]
+
+    // TODO: Catch duplicate primary key error and omit to make function idempotent?
+    await query(pool, sql, values)
+}
+
+export async function deleteLikeRelation(pool: Pool, username: string, postId: string) {
+    const sql = `DELETE FROM likes WHERE username = $1 AND post_id = $2;`
+    const values = [username, postId]
     await query(pool, sql, values)
 }
 

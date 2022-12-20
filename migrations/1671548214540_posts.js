@@ -49,9 +49,26 @@ exports.up = pgm => {
             default: pgm.func('current_timestamp')
         }
     })
+    pgm.createTable('likes', {
+        username: {
+            type: 'text',
+            notNull: true,
+            primaryKey: true,
+            references: 'users',
+            onDelete: 'cascade'
+        },
+        post_id: {
+            type: 'text',
+            notNull: true,
+            primaryKey: true,
+            references: 'posts',
+            onDelete: 'cascade'
+        }
+    })
 };
 
 exports.down = pgm => {
+    pgm.dropTable('likes', {})
     pgm.dropTable('comments', {})
     pgm.dropTable('posts', {})
 };

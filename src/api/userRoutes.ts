@@ -87,19 +87,23 @@ userRouter.post('/:username/follow', async (req: Request, res: Response) => {
   const followsUsername = req.params.username
   const shouldFollow = req.query.follow
 
-  if (shouldFollow === 'true') {
-    await storeFollowerRelation(pool, username, followsUsername)
-    res.sendStatus(HTTP_SUCCESS)
-    return
-  }
+  try {
+    if (shouldFollow === 'true') {
+      await storeFollowerRelation(pool, username, followsUsername)
+      res.sendStatus(HTTP_SUCCESS)
+      return
+    }
+  
+    if (shouldFollow === 'false') {
+      await deleteFollowerRelation(pool, username, followsUsername)
+      res.sendStatus(HTTP_SUCCESS)
+      return
+    }
 
-  if (shouldFollow === 'false') {
-    await deleteFollowerRelation(pool, username, followsUsername)
-    res.sendStatus(HTTP_SUCCESS)
-    return
+    sendMappedError(res, new BadRequestError('no valid follow query parameter was provid, please add ?follow=ture or ?follow=false'))
+  } catch (e) {
+    sendMappedError(res, e)
   }
-
-  sendMappedError(res, new BadRequestError('no valid follow query parameter was provid, please add ?follow=ture or ?follow=false'))
 })
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
