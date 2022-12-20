@@ -3,7 +3,7 @@ import fetch from 'node-fetch'
 import { Pool } from 'pg'
 import { v4 } from 'uuid'
 import { GenerationParameters, PaginationParameters, Post, PostContent, PostFilter } from '../data/models'
-import { getFollowedUsernames, queryPosts, storePost } from '../data/storage'
+import { getFollowedUsernames, queryPosts, storeComment, storePost } from '../data/storage'
 import { AUTOCOMPLETE_PATH, BACKEND_HOST } from '../env'
 import { BadRequestError } from '../errors'
 import { getUser } from './user'
@@ -33,6 +33,18 @@ export async function createPost(pool: Pool, username: string, content: string, 
         commentCount: 0,
         likes: 0,
     }
+}
+
+export async function createComment(pool: Pool, input: {username: string, postId: string, content: string}) {
+    const comment = {
+        id: v4(),
+        timestamp: new Date(),
+        ...input,
+    }
+    
+    await storeComment(pool, comment)
+
+    // TODO: Notify subscribers
 }
 
 export async function listPosts(pool: Pool, filter: PostFilter, pagination: PaginationParameters): Promise<{posts: Post[], nextPageToken: string}> {
