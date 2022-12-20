@@ -29,6 +29,19 @@ export async function storePost(pool: Pool, post: PostContent, username: string)
     await query(pool, sql, values)
 }
 
+export async function storeComment(pool: Pool, comment: {id: string, username: string, postId: string, content: string, timestamp?: Date}) {
+    const sql = `INSERT INTO comments(id, username, post_id, content, timestamp) VALUES ($1, $2, $3, $4, $5);`
+    const values = [comment.id, comment.username, comment.postId, comment.content, comment.timestamp]
+    await query(pool, sql, values)
+        .catch(err => {
+            if (isForeignKeyError(err)) {
+                throw new NotFoundError('not found')
+            }
+
+            throw err
+        })
+}
+
 export async function deleteFollowerRelation(pool: Pool, username: string, followsUsername: string) {
     const sql = `DELETE FROM followers WHERE username = $1 AND follows_username = $2;`
     const values = [username, followsUsername]
@@ -131,6 +144,14 @@ function scanPost(row: any): Post {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function isDuplicateKeyError(err: any): boolean {
+    if (err) {
+        return err.code === '23505'
+    }
+    return false
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isForeignKeyError(err: any): boolean {
     if (err) {
         return err.code === '23505'
     }

@@ -2,8 +2,9 @@ import express from 'express'
 import { Request, Response } from 'express';
 import { Either } from 'monet'
 import { GenerationParameters, Post, PostFilter } from '../data/models';
+import { getFollowedUsernames } from '../data/storage';
 import { BadRequestError } from '../errors';
-import { createPost, listPosts, listUserFeed } from '../service/post';
+import { createComment, createPost, listPosts, listUserFeed } from '../service/post';
 import { pool, sendMappedError } from './common';
 import { authenticate } from './middleware';
 
@@ -55,6 +56,24 @@ postsRouter.get('/', async (req: Request, res: Response) => {
   result
     .then(got => res.json(got))
     .catch(err => sendMappedError(res, err))
+})
+
+/**
+ * Create a new comment.
+ */
+postsRouter.post('/:id/comments', async (req: Request, res: Response) => {  
+  if (!req.body.content) {
+    sendMappedError(res, new BadRequestError('property content must not be empty'))
+    return
+  }
+  
+  createComment(pool, {
+    postId: req.params.id,  // TODO: check if id is always valid
+    username: req.body.username,
+    content: req.body.content,
+  })
+  .then(() => res.status(200).end())
+  .catch(err => sendMappedError(res, err))
 })
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
