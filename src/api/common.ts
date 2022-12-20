@@ -26,7 +26,7 @@ export function sendMappedError(res: Response, err: Error, customMsg?: string) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapStatusCode(err: any): number {
     if (typeof err.status === 'function') {
-        return err.status
+        return err.status()
     }
 
     return HTTP_INTERNAL_ERROR
