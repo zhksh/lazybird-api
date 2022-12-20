@@ -19,8 +19,14 @@ export async function storeFollowerRelation(pool: Pool, username: string, follow
     const sql = `INSERT INTO followers(username, follows_username) VALUES ($1, $2);`
     const values = [username, followsUsername]
 
-    // TODO: Catch duplicate primary key error and omit to make function idempotent?
     await query(pool, sql, values)
+        .catch(err => {
+            if (isDuplicateKeyError(err)) {
+                return
+            }
+
+            throw err
+        })
 }
 
 export async function deleteFollowerRelation(pool: Pool, username: string, followsUsername: string) {
@@ -52,8 +58,14 @@ export async function storeLikeRelation(pool: Pool, username: string, postId: st
     const sql = `INSERT INTO likes(username, post_id) VALUES ($1, $2);`
     const values = [username, postId]
 
-    // TODO: Catch duplicate primary key error and omit to make function idempotent?
     await query(pool, sql, values)
+        .catch(err => {
+            if (isDuplicateKeyError(err)) {
+                return
+            }
+
+            throw err
+        })
 }
 
 export async function deleteLikeRelation(pool: Pool, username: string, postId: string) {
