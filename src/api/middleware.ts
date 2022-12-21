@@ -17,7 +17,6 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
             .cata(
                 () => sendMappedError(res, new UnauthorizedError('invalid token provided')),
                 payload => {
-                    // TODO: Check if user actually exists?
                     req.body.username = payload.username
                     next()
                 },

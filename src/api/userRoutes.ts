@@ -82,11 +82,14 @@ userRouter.get('/:username', async (req: Request, res: Response) => {
 /** 
  * Follow the given user.
  */
-userRouter.post('/:username/follow', async (req: Request, res: Response) => {
-  // TODO: Don't allow following itself?
-  
+userRouter.post('/:username/follow', async (req: Request, res: Response) => {  
   const username = req.body.username
   const followsUsername = req.params.username
+
+  if (username === followsUsername) {
+    sendMappedError(res, new BadRequestError('user cannot follow itself'))
+    return
+  }
 
   storeFollowerRelation(pool, username, followsUsername)
     .then(() => res.sendStatus(HTTP_SUCCESS))
