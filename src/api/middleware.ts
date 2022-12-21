@@ -8,6 +8,7 @@ import { decodeJWT } from '../service/jwt'
  */
 export const authenticate = (req: Request, res: Response, next: NextFunction) => {
     try {
+        // TODO: Check if Bearer is actually set?
         const token = req.header('Authorization')?.replace('Bearer ', '')
 
         if (!token) {

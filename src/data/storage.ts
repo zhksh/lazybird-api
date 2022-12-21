@@ -25,6 +25,10 @@ export async function storeFollowerRelation(pool: Pool, username: string, follow
                 return
             }
 
+            if (isForeignKeyError(err)) {
+                throw new NotFoundError('user not found')
+            }
+
             throw err
         })
 }
@@ -47,7 +51,7 @@ export async function storeComment(pool: Pool, comment: {id: string, username: s
     await query(pool, sql, values)
         .catch(err => {
             if (isForeignKeyError(err)) {
-                throw new NotFoundError('not found')
+                throw new NotFoundError('post not found')
             }
 
             throw err
@@ -62,6 +66,10 @@ export async function storeLikeRelation(pool: Pool, username: string, postId: st
         .catch(err => {
             if (isDuplicateKeyError(err)) {
                 return
+            }
+
+            if (isForeignKeyError(err)) {
+                throw new NotFoundError('post not found')
             }
 
             throw err
@@ -175,7 +183,7 @@ function isDuplicateKeyError(err: any): boolean {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function isForeignKeyError(err: any): boolean {
     if (err) {
-        return err.code === '23505'
+        return err.code === '23503'
     }
     return false
 }

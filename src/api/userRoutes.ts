@@ -83,6 +83,8 @@ userRouter.get('/:username', async (req: Request, res: Response) => {
  * Follow the given user.
  */
 userRouter.post('/:username/follow', async (req: Request, res: Response) => {
+  // TODO: Don't allow following itself?
+  
   const username = req.body.username
   const followsUsername = req.params.username
 
