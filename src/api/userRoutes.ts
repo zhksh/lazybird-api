@@ -85,31 +85,26 @@ userRouter.get('/:username', async (req: Request, res: Response) => {
 userRouter.post('/:username/follow', async (req: Request, res: Response) => {
   const username = req.body.username
   const followsUsername = req.params.username
-  const shouldFollow = req.query.follow
 
-  try {
-    if (shouldFollow === 'true') {
-      await storeFollowerRelation(pool, username, followsUsername)
-      res.sendStatus(HTTP_SUCCESS)
-      return
-    }
+  storeFollowerRelation(pool, username, followsUsername)
+    .then(() => res.sendStatus(HTTP_SUCCESS))
+    .catch(err => sendMappedError(res, err))
+})
+
+/** 
+ * Unfollow the given user.
+ */
+ userRouter.delete('/:username/follow', async (req: Request, res: Response) => {
+  const username = req.body.username
+  const followsUsername = req.params.username
   
-    if (shouldFollow === 'false') {
-      await deleteFollowerRelation(pool, username, followsUsername)
-      res.sendStatus(HTTP_SUCCESS)
-      return
-    }
-
-    sendMappedError(res, new BadRequestError('no valid follow query parameter was provid, please add ?follow=ture or ?follow=false'))
-  } catch (e) {
-    sendMappedError(res, e)
-  }
+  deleteFollowerRelation(pool, username, followsUsername)
+    .then(() => res.sendStatus(HTTP_SUCCESS))
+    .catch(err => sendMappedError(res, err))
 })
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function validateSignUpRequest(body: any): Maybe<BadRequestError> {
-  // TODO: Refactor, use schema.validate?
-  
   if (!body.username) {
     return Maybe.Some(new BadRequestError('username must not be empty'))
   }
