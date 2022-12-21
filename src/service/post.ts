@@ -54,6 +54,7 @@ export async function listPosts(pool: Pool, filter: PostFilter, pagination: Pagi
 
     const posts = await queryPosts(pool, pagination.size + 1, { after: afterDate, usernames: filter.usernames })
 
+    // TODO: Currently our pagination could fail, if 2 posts have the exact same timestamp. Solve by adding secondary sort criterion
     let nextPageToken = ""
     if (posts.length > pagination.size) {
         posts.pop()
@@ -69,8 +70,6 @@ export async function listPosts(pool: Pool, filter: PostFilter, pagination: Pagi
 export async function listUserFeed(pool: Pool, username: string, filter:PostFilter, pagination: PaginationParameters): Promise<{posts: Post[], nextPageToken: string}> {
     let followed = await getFollowedUsernames(pool, username)
     followed.push(username)
-
-    console.log(followed)
 
     if (filter.usernames) {
         followed = followed.filter(username => filter.usernames.includes(username))

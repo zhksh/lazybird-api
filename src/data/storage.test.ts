@@ -8,26 +8,20 @@ import migrate from 'node-pg-migrate'
 let pool: Pool
 let databaseName: string
 
-before(async () => {
-  try {
-    await createTestingDatabase()    
-    await writeTestData()
-  } catch(e) {
-    assert.fail(e)
-  }
-})
+before(() => createTestingDatabase().then(writeTestData).catch(e => assert.fail(e)))
 
-after(async () => {
-  teardownTestingDatabase()
-  .catch(err => console.error('failed to teardown database', err))
-})
+after(() => teardownTestingDatabase().catch(err => console.error('failed to teardown database', err)))
 
 describe('queryPosts', function() {
   it('after filter works as expected', async function() {
     try {
-      const got = await queryPosts(pool, 2, { after: samplePosts[1].timestamp })
-      const want = [samplePosts[2], samplePosts[3]]
-      assert.deepEqual(got, want)
+      // TODO: Fix me. Database is not ready when test starts
+      await new Promise(resolve => setTimeout(resolve, 10))
+
+      const page1 = await queryPosts(pool, 2, {})
+      assert.equal(page1.length, 2)
+      const page2 = await queryPosts(pool, 2, { after: page1[1].timestamp })
+      assert.deepEqual(page1.concat(page2), samplePosts)
     } catch(e) {
       assert.fail(e)
     }

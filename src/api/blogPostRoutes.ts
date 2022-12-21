@@ -2,7 +2,7 @@ import express from 'express'
 import { Request, Response } from 'express';
 import { Either } from 'monet'
 import { GenerationParameters, Post, PostFilter } from '../data/models';
-import { deleteLikeRelation, getFollowedUsernames, storeLikeRelation } from '../data/storage';
+import { deleteLikeRelation, storeLikeRelation } from '../data/storage';
 import { BadRequestError } from '../errors';
 import { createComment, createPost, listPosts, listUserFeed } from '../service/post';
 import { HTTP_SUCCESS } from './codes';

@@ -146,10 +146,9 @@ export async function queryPosts(pool: Pool, limit: number, filter?: {after?: Da
     const sql = 
     `SELECT id, content, auto_complete, timestamp, users.username, icon_id, display_name 
         FROM posts JOIN users ON posts.username = users.username ${where} 
-        ORDER BY timestamp DESC 
+        ORDER BY timestamp DESC
         LIMIT $${argument++}
     `
-
     const result = await query(pool, sql, values)
     return result.rows.map(scanPost)
 }
