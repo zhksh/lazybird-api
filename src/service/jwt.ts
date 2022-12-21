@@ -12,7 +12,7 @@ export function encodeJWT(payload: Payload): Either<Error, string> {
         const token = jwt.sign(payload, JWT_SECRET_KEY)
         return Either.right(token)
     } catch(e) {
-        return Either.left(new Error('failed to sign JWT'))
+        return Either.left(e)
     }
 }
 
@@ -21,6 +21,6 @@ export function decodeJWT(token: string): Either<Error, Payload> {
         const decoded = jwt.verify(token, JWT_SECRET_KEY, {})
         return Either.right(decoded as Payload)        
     } catch(e) {
-        return Either.left(new Error('failed to decode JWT'))
+        return Either.left(e)
     }
 }
