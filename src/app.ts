@@ -4,6 +4,7 @@ import { authRouter, userRouter } from './api/userRoutes'
 import { backendRouter } from './api/backendRoutes'
 import { postsRouter } from './api/blogPostRoutes'
 import { PORT } from './env'
+import { pool } from './api/common'
 
 const app = express()
 
@@ -17,6 +18,12 @@ app.get('/', (req, res) => {
     res.send('Hi Gruppe 2, server is running :)')
 })
 
-// TODO: Add graceful shutdown with pool.end()?
 app.use(errorhandler({ dumpExceptions: true, showStack: true }));
-app.listen(PORT, () => console.log(`api running on http://localhost:${PORT}`))
+
+const server = app.listen(PORT, () => console.log(`api running on http://localhost:${PORT}`))
+
+process.on('SIGTERM', () => {
+    server.close(() => {
+        pool.end()
+    })
+})

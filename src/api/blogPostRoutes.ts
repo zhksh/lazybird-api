@@ -69,7 +69,7 @@ postsRouter.post('/:id/comments', async (req: Request, res: Response) => {
   }
   
   createComment(pool, {
-    postId: req.params.id,  // TODO: check if id is always valid
+    postId: req.params.id,
     username: req.body.username,
     content: req.body.content,
   })
@@ -78,30 +78,27 @@ postsRouter.post('/:id/comments', async (req: Request, res: Response) => {
 })
 
 /**
- * Like or unlike a post.
+ * Like a post.
  */
 postsRouter.post('/:id/likes', async (req: Request, res: Response) => {  
   const username = req.body.username
   const postId = req.params.id
-  const shouldLike = req.query.like
-
-  try {
-    if (shouldLike === 'true') {
-      await storeLikeRelation(pool, username, postId)
-      res.sendStatus(HTTP_SUCCESS)
-      return
-    }
   
-    if (shouldLike === 'false') {
-      await deleteLikeRelation(pool, username, postId)
-      res.sendStatus(HTTP_SUCCESS)
-      return
-    }
-   
-    sendMappedError(res, new BadRequestError('no valid like query parameter was provid, please add ?like=ture or ?like=false'))
-  } catch (e) {
-    sendMappedError(res, e)
-  }
+  storeLikeRelation(pool, username, postId)
+    .then(() => res.sendStatus(HTTP_SUCCESS))
+    .catch(err => sendMappedError(res, err))
+})
+
+/**
+ * Unlike a post.
+ */
+ postsRouter.delete('/:id/likes', async (req: Request, res: Response) => {  
+  const username = req.body.username
+  const postId = req.params.id
+  
+  deleteLikeRelation(pool, username, postId)
+    .then(() => res.sendStatus(HTTP_SUCCESS))
+    .catch(err => sendMappedError(res, err))
 })
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

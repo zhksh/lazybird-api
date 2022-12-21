@@ -105,15 +105,24 @@ paths:
     post:
       tags:
         - User
-      summary: Follow/Unfollow
-      description: Follow or unfollow the specified user.
-      parameters:
-        - in: path
-          name: follow
-          schema:
-            type: boolean
-          required: true
-          description: If true, the user is followed. If false, the user is unfollowed.
+      summary: Follow
+      description: Follow the specified user.
+      responses:
+        '200':
+          description: ok
+        '404':
+          description: 'No user with the given id was found.'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - User
+      summary: Unfollow
+      description: Unfollow the specified user.
       responses:
         '200':
           description: ok
@@ -245,15 +254,22 @@ paths:
     post:
       tags:
         - Blog Post
-      summary: Like/Unlike post
+      summary: Like post
       description: Like the given post.
-      parameters:
-        - in: path
-          name: like
-          schema:
-            type: boolean
-          required: true
-          description: If true, the post is liked. If false, the post is unliked.
+      responses:
+        '200':
+          description: ok
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - Blog Post
+      summary: Remove like on post
+      description: Unlike the given post.
       responses:
         '200':
           description: ok

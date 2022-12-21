@@ -1,31 +1,43 @@
 import { Request, Response, NextFunction } from "express"
-import { HTTP_UNAUTHORIZED } from "./codes"
 import { decodeJWT } from '../service/jwt'
+import { Either } from "monet"
+import { BadRequestError, UnauthorizedError } from "../errors"
+import { sendMappedError } from "./common"
 
 /**
  * Middleware that checks for a JWT token and if one is present, decodes it and sets body.username.
  * If the user is not authenticated, it returns a status 401.
  */
 export const authenticate = (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const token = req.header('Authorization')?.replace('Bearer ', '')
-
-        if (!token) {
-            res.status(HTTP_UNAUTHORIZED).send('not authorized')
-            return
-        }
-
-        decodeJWT(token)
-        .cata(
-            () => { res.status(HTTP_UNAUTHORIZED).send('not authorized') },
-            payload => {
-                req.body.username = payload.username
-                next()
-            },
+    parseToken(req)
+    .cata(
+        err => sendMappedError(res, err), 
+        token => {
+            decodeJWT(token)
+            .cata(
+                () => sendMappedError(res, new UnauthorizedError('invalid token provided')),
+                payload => {
+                    req.body.username = payload.username
+                    next()
+                },
         )
+    })
+}
 
-        // TODO: Check if user actually exists?
-    } catch(e) {
-        res.status(HTTP_UNAUTHORIZED).send('not authorized')
+function parseToken(req: Request): Either<BadRequestError, string> {
+    const auth = req.header('Authorization')
+    if (!auth) {
+        return Either.left(new BadRequestError('please provide an authentication header including the JWT token'))
     }
+
+    const split = auth.split(' ')
+    if (split.length !== 2) {
+        return Either.left(new BadRequestError('invalid authorization header provided'))
+    }
+
+    if (split[0] !== 'Bearer') {
+        return Either.left(new BadRequestError('invalid authorization header provided, use \'Bearer <JWT>\''))
+    }
+
+    return Either.right(split[1])
 }

@@ -25,6 +25,10 @@ export async function storeFollowerRelation(pool: Pool, username: string, follow
                 return
             }
 
+            if (isForeignKeyError(err)) {
+                throw new NotFoundError('user not found')
+            }
+
             throw err
         })
 }
@@ -47,7 +51,7 @@ export async function storeComment(pool: Pool, comment: {id: string, username: s
     await query(pool, sql, values)
         .catch(err => {
             if (isForeignKeyError(err)) {
-                throw new NotFoundError('not found')
+                throw new NotFoundError('post not found')
             }
 
             throw err
@@ -62,6 +66,10 @@ export async function storeLikeRelation(pool: Pool, username: string, postId: st
         .catch(err => {
             if (isDuplicateKeyError(err)) {
                 return
+            }
+
+            if (isForeignKeyError(err)) {
+                throw new NotFoundError('post not found')
             }
 
             throw err
@@ -115,27 +123,23 @@ export async function getFollowedUsernames(pool: Pool, username: string): Promis
 }
 
 export async function queryPosts(pool: Pool, limit: number, filter?: {after?: Date, usernames?: string[]}): Promise<Post[]>{
-    // TODO: Refactor me
     const values = []
     const conditions = []
-    let param = 1
-
+    let argument = 1
+    
     if (filter) {
         if (filter.after) {
-            conditions.push(`timestamp < $${param++}`)
+            conditions.push(`timestamp < $${argument++}`)
             values.push(filter.after)
         }
     
         if (filter.usernames) {
-            conditions.push(`posts.username = ANY($${param++}::text[])`)
+            conditions.push(`posts.username = ANY($${argument++}::text[])`)
             values.push(filter.usernames)
         }
     }
 
-    let where = ''
-    if (conditions.length > 0) {
-        where = 'WHERE ' + conditions.join(' AND ')
-    }
+    const where = buildWhereClause(conditions)
 
     values.push(limit)
 
@@ -143,7 +147,7 @@ export async function queryPosts(pool: Pool, limit: number, filter?: {after?: Da
     `SELECT id, content, auto_complete, timestamp, users.username, icon_id, display_name 
         FROM posts JOIN users ON posts.username = users.username ${where} 
         ORDER BY timestamp DESC 
-        LIMIT $${param++}
+        LIMIT $${argument++}
     `
 
     const result = await query(pool, sql, values)
@@ -179,7 +183,7 @@ function isDuplicateKeyError(err: any): boolean {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function isForeignKeyError(err: any): boolean {
     if (err) {
-        return err.code === '23505'
+        return err.code === '23503'
     }
     return false
 }
@@ -188,4 +192,12 @@ function isForeignKeyError(err: any): boolean {
 async function query(pool: Pool, sql: string, values?: any[]): Promise<QueryResult<any>> {
     const client = await pool.connect()
     return client.query(sql, values).finally(() => client.release())
+}
+
+function buildWhereClause(conditions: string[]): string {
+    if (conditions.length > 0) {
+        return 'WHERE ' + conditions.join(' AND ')
+    }
+    
+    return ''
 }

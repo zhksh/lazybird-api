@@ -1,7 +1,6 @@
 import { Response } from "express"
 import { Pool } from "pg"
 
-// TODO: Move pool to service level?
 export const pool = new Pool({
     database: process.env.POSTGRES_DB ?? 'postgres',
     host: process.env.POSTGRES_HOST ?? 'localhost',
@@ -11,7 +10,6 @@ export const pool = new Pool({
 })
 
 // TODO: Move everything to error.ts?
-
 export const HTTP_SUCCESS = 200
 export const HTTP_BAD_REQUEST = 400
 export const HTTP_UNAUTHORIZED = 401
