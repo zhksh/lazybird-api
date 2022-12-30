@@ -122,6 +122,14 @@ export async function getFollowedUsernames(pool: Pool, username: string): Promis
     return result.rows.map(row => row.follows_username)
 }
 
+export async function getComments(pool: Pool, postId: string): Promise<Comment[]> {
+    throw 'not implemented'
+}
+
+export async function getPost(pool: Pool, postId: string): Promise<Post> {
+    throw 'not implemented'
+}
+
 export async function queryPosts(pool: Pool, limit: number, filter?: {after?: Date, usernames?: string[]}): Promise<Post[]>{
     const values = []
     const conditions = []

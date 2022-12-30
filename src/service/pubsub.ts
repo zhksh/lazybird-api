@@ -4,10 +4,10 @@ import { EventEmitter } from 'events'
 
 type PostId = string
 type SubscriptionId = string
-type Subscription = {
+export type Subscription = {
     id: SubscriptionId
     postId: PostId
-    handler: () => Promise<void>
+    handler: (postId: string) => Promise<void>
 }
 type SubscriptionGroup = Map<SubscriptionId, Subscription>
 
@@ -15,7 +15,7 @@ const lock = new ReadWriteLock()
 const subscriptions = new Map<PostId, SubscriptionGroup>()
 const emitter = new EventEmitter()
 
-export async function subscribe(postId: PostId, callback: () => Promise<void>): Promise<Subscription> {
+export async function subscribe(postId: PostId, callback: (postId: string) => Promise<void>): Promise<Subscription> {
     // TODO: Possible improvement: Could use lock keys to only lock per group and not all subscriptions. Also, could only do read lock for some operations.
     const sub = {
         id: v4(),
@@ -56,7 +56,7 @@ emitter.on('postUpdated', postId => {
         const group = subscriptions.get(postId)
         if (group) {
             for (const sub of group.values()) {
-                sub.handler().catch(err => console.log('publish error', err))
+                sub.handler(postId).catch(err => console.log('publish error', err))
             }
         }
     })
