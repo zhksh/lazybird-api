@@ -1,32 +1,19 @@
 import { v4 } from 'uuid'
-import ReadWriteLock from 'rwlock';
+import ReadWriteLock from 'rwlock'
+import { EventEmitter } from 'events'
 
-type SubscriptionId = string
 type PostId = string
-
-type SubscriptionGroup = Map<SubscriptionId, Subscription>
-
-interface Subscription {
+type SubscriptionId = string
+type Subscription = {
     id: SubscriptionId
     postId: PostId
     handler: () => Promise<void>
 }
+type SubscriptionGroup = Map<SubscriptionId, Subscription>
 
-const lock = new ReadWriteLock();
-const subscriptions = new Map<PostId, SubscriptionGroup>();
-
-export async function publish(postId: PostId) {
-    await inReadLock(() => {
-        const group = subscriptions.get(postId)
-    
-        // TODO: Check what is returned if get is called on non existend post
-        if (group) {
-            for (const sub of group.values()) {
-                sub.handler().catch(err => console.log('publish error', err))
-            }
-        }
-    })
-}
+const lock = new ReadWriteLock()
+const subscriptions = new Map<PostId, SubscriptionGroup>()
+const emitter = new EventEmitter()
 
 export async function subscribe(postId: PostId, callback: () => Promise<void>): Promise<Subscription> {
     // TODO: Possible improvement: Could use lock keys to only lock per group and not all subscriptions. Also, could only do read lock for some operations.
@@ -58,6 +45,21 @@ export async function unsubscribe(sub: Subscription) {
         }
     })
 }
+
+export async function publish(postId: PostId) {
+    emitter.emit('postUpdated', postId)
+}
+
+emitter.on('postUpdated', postId => {
+    inReadLock(() => {
+        const group = subscriptions.get(postId)
+        if (group) {
+            for (const sub of group.values()) {
+                sub.handler().catch(err => console.log('publish error', err))
+            }
+        }
+    })
+})
 
 function inWriteLock<T>(callback: () => T, key?: string): Promise<T> {
     return new Promise(resolve => {
