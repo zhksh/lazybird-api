@@ -47,6 +47,7 @@ export async function unsubscribe(sub: Subscription) {
 }
 
 export async function publish(postId: PostId) {
+    // Emitter is used so main thread will not be blocked by the publication.
     emitter.emit('postUpdated', postId)
 }
 

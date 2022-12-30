@@ -3,9 +3,10 @@ import fetch from 'node-fetch'
 import { Pool } from 'pg'
 import { v4 } from 'uuid'
 import { GenerationParameters, PaginationParameters, Post, PostContent, PostFilter } from '../data/models'
-import { getFollowedUsernames, queryPosts, storeComment, storePost } from '../data/storage'
+import { deleteLikeRelation, getFollowedUsernames, queryPosts, storeComment, storeLikeRelation, storePost } from '../data/storage'
 import { AUTOCOMPLETE_PATH, BACKEND_HOST } from '../env'
 import { BadRequestError } from '../errors'
+import { publish } from './pubsub'
 import { getUser } from './user'
 
 export async function createPost(pool: Pool, username: string, content: string, parameters?: GenerationParameters): Promise<Post> {
@@ -44,7 +45,20 @@ export async function createComment(pool: Pool, input: {username: string, postId
     
     await storeComment(pool, comment)
 
-    // TODO: Notify subscribers
+    publish(input.postId)
+}
+
+/**
+ * Either add or remove a like by the given user on the given post.
+ */
+export async function setPostIsLiked(pool: Pool, input: {username: string, postId: string, isLiked: boolean}) {
+    if (input.isLiked) {
+        storeLikeRelation(pool, input.username, input.postId)
+    } else {
+        deleteLikeRelation(pool, input.username, input.postId)
+    }
+
+    publish(input.postId)
 }
 
 export async function listPosts(pool: Pool, filter: PostFilter, pagination: PaginationParameters): Promise<{posts: Post[], nextPageToken: string}> {
