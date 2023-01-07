@@ -122,6 +122,22 @@ export async function getFollowedUsernames(pool: Pool, username: string): Promis
     return result.rows.map(row => row.follows_username)
 }
 
+export async function getPost(pool: Pool, postId: string): Promise<PostMeta> {
+    const sql = 
+    `SELECT posts.id, content, auto_complete, timestamp, users.username, icon_id, display_name 
+        FROM posts JOIN users ON posts.username = users.username
+        WHERE posts.id = $1;
+    `
+    const result = await query(pool, sql, [postId])
+    if (result.rows.length === 0) {
+        throw new NotFoundError('post not found')
+    }
+    
+    const likes = await getLikeCount(pool, postId)
+    const comments = await getComments(pool, postId)
+    return scanPostMeta(result.rows[0], likes, comments)
+}
+
 export async function getComments(pool: Pool, postId: string): Promise<Comment[]> {
     const sql = 
     `SELECT id, users.username, users.icon_id, users.display_name, content, timestamp
@@ -132,19 +148,16 @@ export async function getComments(pool: Pool, postId: string): Promise<Comment[]
     return result.rows.map(scanComment)
 }
 
-export async function getPost(pool: Pool, postId: string): Promise<PostMeta> {
-    const sql = 
-    `SELECT posts.id, content, auto_complete, timestamp, users.username, icon_id, display_name 
-        FROM posts JOIN users ON posts.username = users.username
-        WHERE posts.id = $1;
-    `
+export async function getLikeCount(pool: Pool, postId: string): Promise<number> {
+    const sql = `SELECT COUNT(post_id) FROM likes WHERE post_id = $1;`
     const result = await query(pool, sql, [postId])
-    
+
     if (result.rows.length === 0) {
         throw new NotFoundError('post not found')
     }
-    
-    return scanPost(result.rows[0])
+
+    // TODO: check result
+    return result.rows[0]
 }
 
 export async function postExists(pool: Pool, postId: string): Promise<boolean> {
@@ -182,11 +195,18 @@ export async function queryPosts(pool: Pool, limit: number, filter?: {after?: Da
         LIMIT $${argument++};
     `
     const result = await query(pool, sql, values)
-    return result.rows.map(scanPost)
+    
+    const posts = result.rows.map(async row => {
+        const likes = await getLikeCount(pool, row.id)
+        const comments = await getComments(pool, row.id)
+        return scanPostMeta(row, likes, comments)
+    })
+
+    return Promise.all(posts)
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function scanPost(row: any): PostMeta {
+function scanPostMeta(row: any, likes: number, comments: Comment[]): PostMeta {
     return {
         id: row.id,
         content: row.content,
@@ -197,8 +217,8 @@ function scanPost(row: any): PostMeta {
             icon_id: row.icon_id,
             display_name: row.display_name,
         },
-        likes: 0,       // TODO: Use actual likes once implemented
-        comments: []    // TODO: Use actual comments
+        likes,
+        comments
     }
 }
 

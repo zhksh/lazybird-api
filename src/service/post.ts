@@ -7,7 +7,6 @@ import { deleteLikeRelation, getFollowedUsernames, queryPosts, storeComment, sto
 import { AUTOCOMPLETE_PATH, BACKEND_HOST } from '../env'
 import { BadRequestError } from '../errors'
 import { publish } from './pubsub'
-import { getUser } from './user'
 
 export async function createPost(pool: Pool, username: string, content: string, parameters?: GenerationParameters): Promise<Post> {
     // TODO: Add incontext posts

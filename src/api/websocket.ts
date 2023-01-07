@@ -61,10 +61,9 @@ async function handleEvent(event: InputEvent, socket: WebSocket.WebSocket, subsc
 async function sendPost(socket: WebSocket.WebSocket, postId: string) {
     try {
         const post = await getPost(pool, postId)
-        const comments = await getComments(pool, postId)
         const output: OutputEvent = {
             eventType: 'updated',
-            data: {...post, comments},
+            data: {...post},
         }
         socket.send(JSON.stringify(output))
     } catch(e) {
