@@ -1,14 +1,11 @@
 import * as WebSocket from 'ws'
-import { getComments, getPost } from '../data/storage';
+import { getComments, getPost } from '../data/storage'
+import { InputEvent, OutputEvent } from '../data/models';
 import { subscribe, Subscription, unsubscribe } from '../service/pubsub'
 import { pool } from './common';
+import { HTTP_NOT_FOUND } from './codes';
 
 export const wss = new WebSocket.Server({ noServer: true })
-
-type Event = {
-    eventType: 'subscribe' | 'unsubscribe'
-    postId: string
-}
 
 wss.on('connection', async socket => {
     console.log('socket connected')
@@ -32,7 +29,7 @@ wss.on('connection', async socket => {
     // TODO: Implement ping pong to detect disconnect?
 })
 
-async function handleEvent(event: Event, socket: WebSocket.WebSocket, subscriptions: Map<string, Subscription>) {
+async function handleEvent(event: InputEvent, socket: WebSocket.WebSocket, subscriptions: Map<string, Subscription>) {
     if (event.eventType === 'subscribe') {
         console.log('subscribing to post', event.postId)
 
@@ -59,10 +56,20 @@ async function sendPost(socket: WebSocket.WebSocket, postId: string) {
     try {
         const post = await getPost(pool, postId)
         const comments = await getComments(pool, postId)
-        socket.send(JSON.stringify({...post, comments}))
+        const output: OutputEvent = {
+            eventType: 'updated',
+            data: {...post, comments},
+        }
+        socket.send(JSON.stringify(output))
     } catch(e) {
-        console.error('failed to query post', e)
-        // TODO: Map error
-        socket.send(JSON.stringify({error: e}))
+        const output: OutputEvent = {
+            eventType: 'updated',
+            data: {
+                code: HTTP_NOT_FOUND,
+                message: 'post not found'
+            },
+        }
+
+        socket.send(JSON.stringify(output))
     }
 }

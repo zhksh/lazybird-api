@@ -21,6 +21,10 @@ export interface Post extends PostContent {
     commentCount: number
 }
 
+export interface FullPost extends Post {
+    comments: Comment[]
+}
+
 export interface Comment {
     id: string
     user: User
@@ -39,4 +43,19 @@ export interface PostFilter {
 export interface PaginationParameters {
     size: number
     token?: string
+}
+
+export type InputEvent = {
+    eventType: 'subscribe' | 'unsubscribe'
+    postId: string
+}
+
+export type OutputEvent = {
+    eventType: 'error' | 'updated'
+    data: Error | FullPost
+}
+
+export type Error = {
+    code: number
+    message: string
 }
