@@ -1,7 +1,7 @@
 import express from 'express'
 import { Request, Response } from 'express';
 import { Either } from 'monet'
-import { GenerationParameters, Post, PostFilter } from '../data/models';
+import { GenerationParameters, PostMeta, PostFilter } from '../data/models';
 import { BadRequestError } from '../errors';
 import { createComment, createPost, listPosts, listUserFeed, setPostIsLiked } from '../service/post';
 import { HTTP_SUCCESS } from './codes';
@@ -46,7 +46,7 @@ postsRouter.get('/', async (req: Request, res: Response) => {
   }
   const filter = parsePostFilter(req.body)
 
-  let result: Promise<{posts: Post[], nextPageToken: string}>
+  let result: Promise<{posts: PostMeta[], nextPageToken: string}>
   if (req.body.isUserFeed) {
     result = listUserFeed(pool, req.body.username, filter, pagination)
   } else {

@@ -2,14 +2,14 @@ import { Either } from 'monet'
 import fetch from 'node-fetch'
 import { Pool } from 'pg'
 import { v4 } from 'uuid'
-import { GenerationParameters, PaginationParameters, Post, PostContent, PostFilter } from '../data/models'
+import { GenerationParameters, PaginationParameters, PostMeta, Post, PostFilter } from '../data/models'
 import { deleteLikeRelation, getFollowedUsernames, queryPosts, storeComment, storeLikeRelation, storePost } from '../data/storage'
 import { AUTOCOMPLETE_PATH, BACKEND_HOST } from '../env'
 import { BadRequestError } from '../errors'
 import { publish } from './pubsub'
 import { getUser } from './user'
 
-export async function createPost(pool: Pool, username: string, content: string, parameters?: GenerationParameters): Promise<Post> {
+export async function createPost(pool: Pool, username: string, content: string, parameters?: GenerationParameters): Promise<PostMeta> {
     // TODO: Add incontext posts
     // TODO: Implement automatic answers
     if (parameters) {
@@ -17,7 +17,7 @@ export async function createPost(pool: Pool, username: string, content: string, 
         content = [content, completion].join(' ')
     }
     
-    const post: PostContent = {
+    const post: Post = {
         id: v4(),
         content: content,
         auto_complete: parameters !== undefined,
@@ -31,7 +31,7 @@ export async function createPost(pool: Pool, username: string, content: string, 
     return {
         ...post,
         user: user,
-        commentCount: 0,
+        comments: [],
         likes: 0,
     }
 }
@@ -61,7 +61,7 @@ export async function setPostIsLiked(pool: Pool, input: {username: string, postI
     publish(input.postId)
 }
 
-export async function listPosts(pool: Pool, filter: PostFilter, pagination: PaginationParameters): Promise<{posts: Post[], nextPageToken: string}> {
+export async function listPosts(pool: Pool, filter: PostFilter, pagination: PaginationParameters): Promise<{posts: PostMeta[], nextPageToken: string}> {
     const afterDate = decodePageToken(pagination.token)
                         .leftMap(err => {throw err})
                         .right()
@@ -81,7 +81,7 @@ export async function listPosts(pool: Pool, filter: PostFilter, pagination: Pagi
     }
 }
 
-export async function listUserFeed(pool: Pool, username: string, filter:PostFilter, pagination: PaginationParameters): Promise<{posts: Post[], nextPageToken: string}> {
+export async function listUserFeed(pool: Pool, username: string, filter:PostFilter, pagination: PaginationParameters): Promise<{posts: PostMeta[], nextPageToken: string}> {
     let followed = await getFollowedUsernames(pool, username)
     followed.push(username)
 

@@ -1,8 +1,8 @@
 import { assert } from 'chai'
 import 'mocha'
 import { Pool } from 'pg'
-import { Post, UserDetails } from './models';
-import { getFollowedUsernames, queryPosts, storeFollowerRelation, storePost, storeUserDetails } from './storage'
+import { PostMeta, User } from './models';
+import { getFollowedUsernames, queryPosts, storeFollowerRelation, storePost, storeUser } from './storage'
 import migrate from 'node-pg-migrate'
 
 let pool: Pool
@@ -68,19 +68,19 @@ describe('getFollowedUsernames', function() {
 });
 
 
-const sampleUser1: UserDetails = {  
+const sampleUser1: User = {  
   icon_id: '1',
   username: 'Biggus',
   display_name: 'Dickus'
 }
 
-const sampleUser2: UserDetails = {  
+const sampleUser2: User = {  
   icon_id: '2',
   username: 'Chuck',
   display_name: 'Chuck Norris'
 }
 
-const samplePosts: Post[] = [
+const samplePosts: PostMeta[] = [
   {
     id: '1',
     auto_complete: false,
@@ -90,7 +90,6 @@ const samplePosts: Post[] = [
     likes: 0,
     user: {
       ...sampleUser1,
-      followers: 0,
     }
   },
   {
@@ -102,7 +101,6 @@ const samplePosts: Post[] = [
     likes: 0,
     user: {
       ...sampleUser2,
-      followers: 0,
     }
   },
   {
@@ -114,7 +112,6 @@ const samplePosts: Post[] = [
     likes: 0,
     user: {
       ...sampleUser1,
-      followers: 0,
     }
   },
   {
@@ -126,15 +123,14 @@ const samplePosts: Post[] = [
     likes: 0,
     user: {
       ...sampleUser2,
-      followers: 0,
     }
   },
 ]
 
 async function writeTestData() {
   try {
-    await storeUserDetails(pool, sampleUser1, 'secret')
-    await storeUserDetails(pool, sampleUser2, 'secret')
+    await storeUser(pool, sampleUser1, 'secret')
+    await storeUser(pool, sampleUser2, 'secret')
     await storeFollowerRelation(pool, sampleUser1.username, sampleUser2.username)
     samplePosts.forEach(async (post) => {
       await storePost(pool, post, post.user.username)

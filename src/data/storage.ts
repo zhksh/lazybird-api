@@ -1,8 +1,8 @@
 import { Pool, QueryResult } from "pg";
 import { AlreadyExistsError, NotFoundError } from "../errors";
-import { Post, PostContent, UserDetails, Comment } from "./models";
+import { PostMeta, Post, Comment, User } from "./models";
 
-export async function storeUserDetails(pool: Pool, user: UserDetails, secret: string) {
+export async function storeUser(pool: Pool, user: User, secret: string) {
     const sql = `INSERT INTO users(username, secret, icon_id, display_name) VALUES ($1, $2, $3, $4);`
     const values = [user.username, secret, user.icon_id, user.display_name]
     
@@ -39,7 +39,7 @@ export async function deleteFollowerRelation(pool: Pool, username: string, follo
     await query(pool, sql, values)
 }
 
-export async function storePost(pool: Pool, post: PostContent, username: string) {
+export async function storePost(pool: Pool, post: Post, username: string) {
     const sql = `INSERT INTO posts(id, username, content, auto_complete, timestamp) VALUES ($1, $2, $3, $4, $5);`
     const values = [post.id, username, post.content, post.auto_complete, post.timestamp]
     await query(pool, sql, values)
@@ -93,7 +93,7 @@ export async function getSecretByUsername(pool: Pool, username: string): Promise
     return result.rows[0].secret
 }
 
-export async function getUserDetailsByUsername(pool: Pool, username: string): Promise<UserDetails> {
+export async function getUserByUsername(pool: Pool, username: string): Promise<User> {
     const sql = `SELECT username, icon_id, display_name FROM users WHERE users.username = $1;`
     
     const result = await query(pool, sql, [username])
@@ -104,7 +104,7 @@ export async function getUserDetailsByUsername(pool: Pool, username: string): Pr
     return result.rows[0]
 }
 
-export async function getFollowersForUser(pool: Pool, username: string): Promise<UserDetails[]> {
+export async function getFollowersForUser(pool: Pool, username: string): Promise<User[]> {
     const sql = 
     `SELECT users.username, icon_id, display_name FROM users JOIN followers ON users.username = followers.follows_username WHERE follows_username = $1;`
     
@@ -132,7 +132,7 @@ export async function getComments(pool: Pool, postId: string): Promise<Comment[]
     return result.rows.map(scanComment)
 }
 
-export async function getPost(pool: Pool, postId: string): Promise<Post> {
+export async function getPost(pool: Pool, postId: string): Promise<PostMeta> {
     const sql = 
     `SELECT posts.id, content, auto_complete, timestamp, users.username, icon_id, display_name 
         FROM posts JOIN users ON posts.username = users.username
@@ -153,7 +153,7 @@ export async function postExists(pool: Pool, postId: string): Promise<boolean> {
     return result.rows.length >= 1
 }
 
-export async function queryPosts(pool: Pool, limit: number, filter?: {after?: Date, usernames?: string[]}): Promise<Post[]>{
+export async function queryPosts(pool: Pool, limit: number, filter?: {after?: Date, usernames?: string[]}): Promise<PostMeta[]>{
     const values = []
     const conditions = []
     let argument = 1
@@ -186,7 +186,7 @@ export async function queryPosts(pool: Pool, limit: number, filter?: {after?: Da
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function scanPost(row: any): Post {
+function scanPost(row: any): PostMeta {
     return {
         id: row.id,
         content: row.content,
@@ -196,10 +196,9 @@ function scanPost(row: any): Post {
             username: row.username,
             icon_id: row.icon_id,
             display_name: row.display_name,
-            followers: 0,   // TODO: Use real followers or remove
         },
-        commentCount: 0,    // TODO: Use actual comment count once implemented
-        likes: 0,           // TODO: Use actual likes once implemented
+        likes: 0,       // TODO: Use actual likes once implemented
+        comments: []    // TODO: Use actual comments
     }
 }
 
@@ -211,7 +210,6 @@ function scanComment(row: any): Comment {
             username: row.username,
             icon_id: row.icon_id,
             display_name: row.display_name,
-            followers: 0,   // TODO: Use real followers or remove
         },
         content: row.content,
     }
