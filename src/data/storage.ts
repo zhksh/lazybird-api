@@ -147,6 +147,12 @@ export async function getPost(pool: Pool, postId: string): Promise<Post> {
     return scanPost(result.rows[0])
 }
 
+export async function postExists(pool: Pool, postId: string): Promise<boolean> {
+    const sql = `SELECT posts.id FROM posts WHERE id = $1;`
+    const result = await query(pool, sql, [postId])
+    return result.rows.length >= 1
+}
+
 export async function queryPosts(pool: Pool, limit: number, filter?: {after?: Date, usernames?: string[]}): Promise<Post[]>{
     const values = []
     const conditions = []

@@ -1,9 +1,9 @@
 import * as WebSocket from 'ws'
-import { getComments, getPost } from '../data/storage'
+import { getComments, getPost, postExists } from '../data/storage'
 import { InputEvent, OutputEvent } from '../data/models';
 import { subscribe, Subscription, unsubscribe } from '../service/pubsub'
 import { pool } from './common';
-import { HTTP_NOT_FOUND } from './codes';
+import { HTTP_BAD_REQUEST, HTTP_INTERNAL_ERROR, HTTP_NOT_FOUND } from './codes';
 
 export const wss = new WebSocket.Server({ noServer: true })
 
@@ -13,8 +13,11 @@ wss.on('connection', async socket => {
     const subscriptions = new Map<string, Subscription>();
     
     socket.on('message', message => {        
-        // TODO: Validate event
         const event = JSON.parse(message.toString())
+        if (!isValidInputEvent(event)) {
+            socket.send(JSON.stringify(makeErrorEvent(HTTP_BAD_REQUEST, 'invalid input event')))
+            return
+        }
 
         handleEvent(event, socket, subscriptions)
     })
@@ -33,12 +36,15 @@ async function handleEvent(event: InputEvent, socket: WebSocket.WebSocket, subsc
     if (event.eventType === 'subscribe') {
         console.log('subscribing to post', event.postId)
 
-        // TODO: Error when post is not found
-        const sub = await subscribe(event.postId, () => sendPost(socket, event.postId))
-    
-        sendPost(socket, event.postId)
-        
+        if (!postExists(pool, event.postId)) {
+            socket.send(JSON.stringify(makeErrorEvent(HTTP_NOT_FOUND, 'post not found')))
+            return
+        }
+
+        const sub = await subscribe(event.postId, () => sendPost(socket, event.postId))    
         subscriptions.set(event.postId, sub)
+        
+        sendPost(socket, event.postId)
     }
 
     if (event.eventType === 'unsubscribe') {
@@ -62,14 +68,23 @@ async function sendPost(socket: WebSocket.WebSocket, postId: string) {
         }
         socket.send(JSON.stringify(output))
     } catch(e) {
-        const output: OutputEvent = {
-            eventType: 'updated',
-            data: {
-                code: HTTP_NOT_FOUND,
-                message: 'post not found'
-            },
-        }
+        // TODO: Log error
+        socket.send(JSON.stringify(makeErrorEvent(HTTP_INTERNAL_ERROR, 'internal error')))
+    }
+}
 
-        socket.send(JSON.stringify(output))
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isValidInputEvent(data: any): data is InputEvent {
+    if (!data.eventType || !data.postId) {
+        return false
+    }
+    
+    return ['subscribe', 'unsubscribe'].includes(data.eventType)
+}
+
+function makeErrorEvent(code: number, message: string): OutputEvent {
+    return {
+        eventType: 'error',
+        data: {code, message}
     }
 }

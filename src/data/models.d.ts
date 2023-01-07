@@ -1,3 +1,5 @@
+// TODO: Rework types
+
 export interface UserDetails {
     username: string
     icon_id: string
