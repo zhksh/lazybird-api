@@ -9,7 +9,7 @@ import { BadRequestError } from '../errors'
 import { publish } from './pubsub'
 import { getUser } from './user'
 
-export async function createPost(pool: Pool, username: string, content: string, parameters?: GenerationParameters): Promise<PostMeta> {
+export async function createPost(pool: Pool, username: string, content: string, parameters?: GenerationParameters): Promise<Post> {
     // TODO: Add incontext posts
     // TODO: Implement automatic answers
     if (parameters) {
@@ -26,14 +26,7 @@ export async function createPost(pool: Pool, username: string, content: string, 
     
     await storePost(pool, post, username)
 
-    const user = await getUser(pool, username)
-
-    return {
-        ...post,
-        user: user,
-        comments: [],
-        likes: 0,
-    }
+    return post
 }
 
 export async function createComment(pool: Pool, input: {username: string, postId: string, content: string}) {

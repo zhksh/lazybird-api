@@ -153,7 +153,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PostMeta'
+                $ref: '#/components/schemas/Post'
         default:
           description: unexpected error
           content:
@@ -413,43 +413,42 @@ components:
         pageToken:
           type: string
           description: Specifies which page to return. If not set or pageToken = "" the first page is returned. Use the 'nextPageToken' returned by previous request to get subsequent pages.
-    PostMeta:
+    Post:
       type: object
       required:
       - id
-      - user
       - content
       - timestamp
-      - likes
-      - commentCount
+      - autocompleted
       properties:
-        id: 
+        id:
           type: string
           description: Unique ID identifying the post.
-        user:
-          $ref: '#/components/schemas/User'
-          description: The author of the post.
         content:
           type: string
           description: The content of the post.
         timestamp:
           type: string
           description: Timestamp of the post creation.
+        autocompleted:
+          type: boolean
+          description: Whether or not the post was autocompleted.
+    PostMeta:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/Post'
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+          description: The author of the post.
         likes:
           type: integer
           description: The number of likes added to the comment.
-        commentCount:
-          type: integer
-          description: The number of comments added to the post.
-    Post:
-      type: object
-      allOf:
-        - $ref: '#/components/schemas/PostMeta'
-      properties:
-        comments: 
+        comments:
           type: array
           items:
             $ref: '#/components/schemas/Comment'
+          description: The number of comments added to the post.
     NewComment:
       type: object
       required:
