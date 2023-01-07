@@ -5,33 +5,21 @@ import { pool } from './common';
 
 export const wss = new WebSocket.Server({ noServer: true })
 
-wss.on('connection', async socket => {    
+type Event = {
+    eventType: 'subscribe' | 'unsubscribe'
+    postId: string
+}
+
+wss.on('connection', async socket => {
+    console.log('socket connected')
+    
     const subscriptions = new Map<string, Subscription>();
     
-    socket.on('subscribe', async message => {
-        if (message.postId) {
-            const sub = await subscribe(message.postId, async () => {
-                try {
-                    const post = await getPost(pool, message.postId)
-                    const comments = await getComments(pool, message.postId)
-                    socket.emit('updated', {...post, comments})
-                } catch(e) {
-                    console.error('failed to query post', e)
-                    // TODO: Emit error?
-                }
-            })
-            subscriptions.set(message.postId, sub)
-        }
-    })
+    socket.on('message', message => {        
+        // TODO: Validate event
+        const event = JSON.parse(message.toString())
 
-    socket.on('unsubscribe',async message => {
-        if (message.postId) {
-            const sub = subscriptions.get(message.postId)
-            if (sub) {
-                unsubscribe(sub)
-                subscriptions.delete(message.postId)
-            }
-        }
+        handleEvent(event, socket, subscriptions)
     })
 
     socket.on('close', () => {
@@ -43,3 +31,38 @@ wss.on('connection', async socket => {
 
     // TODO: Implement ping pong to detect disconnect?
 })
+
+async function handleEvent(event: Event, socket: WebSocket.WebSocket, subscriptions: Map<string, Subscription>) {
+    if (event.eventType === 'subscribe') {
+        console.log('subscribing to post', event.postId)
+
+        // TODO: Error when post is not found
+        const sub = await subscribe(event.postId, () => sendPost(socket, event.postId))
+    
+        sendPost(socket, event.postId)
+        
+        subscriptions.set(event.postId, sub)
+    }
+
+    if (event.eventType === 'unsubscribe') {
+        console.log('unsubscribing from post', event.postId)
+        
+        const sub = subscriptions.get(event.postId)
+        if (sub) {
+            unsubscribe(sub)
+            subscriptions.delete(event.postId)
+        }
+    }
+}
+
+async function sendPost(socket: WebSocket.WebSocket, postId: string) {
+    try {
+        const post = await getPost(pool, postId)
+        const comments = await getComments(pool, postId)
+        socket.send(JSON.stringify({...post, comments}))
+    } catch(e) {
+        console.error('failed to query post', e)
+        // TODO: Map error
+        socket.send(JSON.stringify({error: e}))
+    }
+}
