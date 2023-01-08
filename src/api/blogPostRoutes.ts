@@ -1,13 +1,12 @@
 import express from 'express'
 import { Request, Response } from 'express'
 import { Either } from 'monet'
-import { GenerationParameters, Post, PostFilter } from '../data/models'
-import { deleteLikeRelation, storeLikeRelation } from '../data/storage'
-import { BadRequestError } from '../errors'
-import { createComment, createPost, listPosts, listUserFeed } from '../service/post'
-import { HTTP_SUCCESS } from './codes'
-import { pool, sendMappedError } from './common'
-import { authenticate } from './middleware'
+import { GenerationParameters, Post, PostFilter } from '../data/models';
+import { BadRequestError } from '../errors';
+import { createComment, createPost, listPosts, listUserFeed, setPostIsLiked } from '../service/post';
+import { HTTP_SUCCESS } from './codes';
+import { pool, sendMappedError } from './common';
+import { authenticate } from './middleware';
 
 /**
  * Defines all posts/ routes. Requires all requests to be authenticated.
@@ -20,7 +19,7 @@ postsRouter.use(authenticate)
  */
 postsRouter.post('/', async (req: Request, res: Response) => {
   const body = req.body
-  
+
   if (!body.content) {
     sendMappedError(res, new BadRequestError('post content must not be empty'))
     return
@@ -40,7 +39,7 @@ postsRouter.post('/', async (req: Request, res: Response) => {
 /**
  * List posts.
  */
-postsRouter.get('/', async (req: Request, res: Response) => {    
+postsRouter.get('/', async (req: Request, res: Response) => {
   const pagination = {
     size: parsePageSize(req),
     token: parsePageToken(req),
@@ -79,28 +78,20 @@ postsRouter.post('/:id/comments', async (req: Request, res: Response) => {
 })
 
 /**
- * Like a post.
+ * Like/ unlike a post.
  */
-postsRouter.post('/:id/likes', async (req: Request, res: Response) => {  
-  const username = req.body.username
-  const postId = req.params.id
-  
-  storeLikeRelation(pool, username, postId)
-    .then(() => res.sendStatus(HTTP_SUCCESS))
-    .catch(err => sendMappedError(res, err))
-})
+postsRouter.post('/:id/likes', likeHandler)
+postsRouter.delete('/:id/likes', likeHandler)
 
-/**
- * Unlike a post.
- */
- postsRouter.delete('/:id/likes', async (req: Request, res: Response) => {  
+async function likeHandler(req: Request, res: Response) {
   const username = req.body.username
   const postId = req.params.id
+  const isLiked = req.method === 'POST'
   
-  deleteLikeRelation(pool, username, postId)
+  setPostIsLiked(pool, {username, postId, isLiked})
     .then(() => res.sendStatus(HTTP_SUCCESS))
     .catch(err => sendMappedError(res, err))
-})
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function parseGenerationParameters(body: any): Either<BadRequestError, GenerationParameters | undefined> {

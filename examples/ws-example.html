@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>  
+        <meta charset="UTF-8">
+        <title>Websocket Test</title>
+    </head>
+    <body>
+        <h1>Test Websocket</h1>
+
+        <h2>Post id:</h2>
+        <input id="textField" type="text">
+        <button onclick="subscribe()">Subscribe</button>
+
+        <h2>Output:</h2>
+        <p id="output"></p>
+
+        <script>
+            const socket = new WebSocket('ws://localhost:6969')
+            const output = document.getElementById('output')
+            const textField = document.getElementById('textField')
+        
+            socket.onopen = () => {
+                console.log('websocket connection open')
+            }
+            
+            socket.onmessage = message => {
+                const post = JSON.parse(message.data)                
+                console.log(post)
+                output.innerHTML = message.data
+            }
+            socket.onerror = err => console.log(err)
+        
+            function subscribe() {
+                const postId = textField.value
+                if (!postId) {
+                    return
+                }
+                
+                const event = {
+                    eventType: 'subscribe',
+                    postId: postId,
+                }
+                
+                console.log('sending event', event)
+                socket.send(JSON.stringify(event))
+            }
+        </script>
+    </body>
+</html>

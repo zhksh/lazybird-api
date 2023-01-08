@@ -1,24 +1,30 @@
-export interface UserDetails {
+/**
+ * Defines a user uniquely identified by the username.
+ */
+export interface User {
     username: string
     icon_id: string
     display_name?: string
 }
 
-export interface User extends UserDetails {
-    followers: number // We could also use the actual followers. This would not be possible in an actual production app, but might make our life easier.
+export interface UserMeta {
+    followers: User[]   // The user array would not scale particularly well in a real application, but should be fine for sake of the practical.
 }
 
-export interface PostContent {
+export interface Post {
     id: string
     content: string
     auto_complete: boolean
     timestamp: Date
 }
 
-export interface Post extends PostContent {
+/**
+ * Extends a Post by adding meta information.
+ */
+export interface PostMeta extends Post {
     user: User
     likes: number
-    commentCount: number
+    comments: Comment[]
 }
 
 export interface Comment {
@@ -39,4 +45,19 @@ export interface PostFilter {
 export interface PaginationParameters {
     size: number
     token?: string
+}
+
+export interface InputEvent {
+    eventType: 'subscribe' | 'unsubscribe'
+    postId: string
+}
+
+export interface OutputEvent {
+    eventType: 'error' | 'updated'
+    data: Error | PostMeta
+}
+
+export interface Error {
+    code: number
+    message: string
 }

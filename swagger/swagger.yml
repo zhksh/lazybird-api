@@ -32,7 +32,7 @@ paths:
             schema: 
               allOf:
                 - $ref: '#/components/schemas/Authentication'
-                - $ref: '#/components/schemas/UserDetails'
+                - $ref: '#/components/schemas/User'
       responses:
         '200':
           description: 'User was successfully created. Returns a JWT access token that should be set in the Authorization header of subsequent API calls.'
@@ -92,7 +92,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/UserMeta'
         '404':
           description: 'No user with the given username was found.'
         default:
@@ -153,7 +153,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PostMeta'
+                $ref: '#/components/schemas/Post'
         default:
           description: unexpected error
           content:
@@ -349,7 +349,7 @@ components:
         tokenType:
           type: string
           description: Type of the token, typically 'Bearer'.
-    UserDetails:
+    User:
       type: object
       required:
       - username
@@ -364,14 +364,15 @@ components:
         displayName:
           type: string
           description: The name that is displayed publically inside the app.
-    User:
+    UserMeta:
       type: object
       allOf:
-        - $ref: '#/components/schemas/UserDetails'
+        - $ref: '#/components/schemas/User'
       properties:
         followers:
-          type: integer
-          description: Number of followers  # Is number of followers enough, or do we want to display the actual followers?
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
     NewPost:
       type: object
       required:
@@ -392,7 +393,6 @@ components:
         temperature:
           type: number
           description: The temperature, i.e. craziness of the post.
-        # TODO: add additional needed parameters
     ContextPost:
       type: object
       required:
@@ -410,43 +410,42 @@ components:
         temperature:
           type: number
           description: The randomness, i.e. craziness of the post.
-    PostMeta:
+    Post:
       type: object
       required:
       - id
-      - user
       - content
       - timestamp
-      - likes
-      - commentCount
+      - autocompleted
       properties:
-        id: 
+        id:
           type: string
           description: Unique ID identifying the post.
-        user:
-          $ref: '#/components/schemas/User'
-          description: The author of the post.
         content:
           type: string
           description: The content of the post.
         timestamp:
           type: string
           description: Timestamp of the post creation.
+        autocompleted:
+          type: boolean
+          description: Whether or not the post was autocompleted.
+    PostMeta:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/Post'
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+          description: The author of the post.
         likes:
           type: integer
           description: The number of likes added to the comment.
-        commentCount:
-          type: integer
-          description: The number of comments added to the post.
-    Post:
-      type: object
-      allOf:
-        - $ref: '#/components/schemas/PostMeta'
-      properties:
-        comments: 
+        comments:
           type: array
           items:
             $ref: '#/components/schemas/Comment'
+          description: The number of comments added to the post.
     NewComment:
       type: object
       required:

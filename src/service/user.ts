@@ -2,12 +2,12 @@ import bcrypt from 'bcrypt'
 import { Pool } from 'pg'
 import { SALT_ROUNDS } from '../env'
 import { BadRequestError, UnauthorizedError } from '../errors'
-import { getFollowersForUser, getSecretByUsername, getUserDetailsByUsername, storeUserDetails } from '../data/storage'
-import { encodeJWT } from './jwt'
-import { User, UserDetails } from '../data/models'
+import { getFollowersForUser, getSecretByUsername, getUserByUsername, storeUser } from '../data/storage'
+import { encodeJWT, Token } from './jwt'
+import { User, UserMeta } from '../data/models'
 import { Maybe } from 'monet'
 
-export async function createUser(pool: Pool, userDetails: UserDetails, password: string): Promise<string> {
+export async function createUser(pool: Pool, userDetails: User, password: string): Promise<Token> {
     const validationErr = validateUsername(userDetails.username)
     if (validationErr.isSome()) {
         throw validationErr.some()
@@ -15,12 +15,12 @@ export async function createUser(pool: Pool, userDetails: UserDetails, password:
 
     const hash = await hashPassword(password)
 
-    await storeUserDetails(pool, userDetails, hash)
+    await storeUser(pool, userDetails, hash)
     
     return encodeJWT({username: userDetails.username}).toPromise()
 }
 
-export async function authenticateUser(pool: Pool, username: string, password: string): Promise<string> {
+export async function authenticateUser(pool: Pool, username: string, password: string): Promise<Token> {
     const secret = await getSecretByUsername(pool, username)
     
     const passwortIsCorrect = await bcrypt.compare(password, secret)
@@ -31,10 +31,10 @@ export async function authenticateUser(pool: Pool, username: string, password: s
     throw new UnauthorizedError('incorrect password')
 }
 
-export async function getUser(pool: Pool, username: string): Promise<User> {
-    const userDetails = await getUserDetailsByUsername(pool, username)
+export async function getUser(pool: Pool, username: string): Promise<UserMeta> {
+    const userDetails = await getUserByUsername(pool, username)
     const followers = await getFollowersForUser(pool, username)
-    return {...userDetails, followers: followers.length}
+    return {...userDetails, followers }
 }
 
 async function hashPassword(password: string): Promise<string> {

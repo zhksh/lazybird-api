@@ -2,16 +2,14 @@
 // the forward pass from nginx too
 export const PORT = process.env.API_PORT ?? 6969
 export const SALT_ROUNDS = 8
-export const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY ?? 'dev_only'
-
+export const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET ?? 'dev_only'
 
 //address of the machine running the LM api
-export const BACKEND_HOST = 'http:/138.246.237.14/'
-// export const BACKEND_HOST = 'http:/localhost:5000/'
+export const BACKEND_HOST = process.env.BACKEND_HOST ?? 'http:/138.246.237.14/'
 
 //relevant enpoints of the LM api
-export const IN_CONTEXT_PATH = 'api/create-incontext-post'
-export const AUTOCOMPLETE_PATH = 'api/complete-post'
+export const IN_CONTEXT_PATH = process.env.IN_CONTEXT_PATH ?? 'api/create-incontext-post'
+export const AUTOCOMPLETE_PATH = process.env.AUTOCOMPLETE_PATH ?? 'api/complete-post'
 
 //timout for calls to the LM api
 export const TIMEOUT = 60000 //ms

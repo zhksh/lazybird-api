@@ -7,3 +7,4 @@ node_modules
 # TypeScript cache
 *.tsbuildinfo
 .idea
+.env
