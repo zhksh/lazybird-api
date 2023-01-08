@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt'
 import { Pool } from 'pg'
 import { SALT_ROUNDS } from '../env'
 import { BadRequestError, UnauthorizedError } from '../errors'
-import { getFollowersForUser, getSecretByUsername, getUserByUsername, storeUser } from '../data/storage'
+import { getFollowersForUser, getSecretByUsername, getUserByUsername, storeUser, updateUserRecord } from '../data/storage'
 import { encodeJWT, Token } from './jwt'
 import { User, UserMeta } from '../data/models'
 import { Maybe } from 'monet'
@@ -29,6 +29,34 @@ export async function authenticateUser(pool: Pool, username: string, password: s
     }
 
     throw new UnauthorizedError('incorrect password')
+}
+
+export async function updateUser(pool: Pool, username: string, update: { displayName?: string, iconId?: string, password?: string }) {
+    const updates = []
+
+    if (update.displayName) {
+        updates.push({
+            row: 'display_name', 
+            value: update.displayName,
+        })
+    }
+
+    if (update.iconId) {
+        updates.push({
+            row: 'icon_id', 
+            value: update.iconId,
+        })
+    }
+
+    if (update.password) {
+        const hash = await hashPassword(update.password)
+        updates.push({
+            row: 'secret', 
+            value: hash,
+        })
+    }
+    
+    return updateUserRecord(pool, username, updates)
 }
 
 export async function getUser(pool: Pool, username: string): Promise<UserMeta> {

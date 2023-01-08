@@ -1,13 +1,8 @@
 import { Response } from "express"
 import { Pool } from "pg"
 
-export const pool = new Pool({
-    database: process.env.POSTGRES_DB ?? 'postgres',
-    host: process.env.POSTGRES_HOST ?? 'localhost',
-    user: process.env.POSTGRES_USER ?? 'postgres',
-    port: Number(process.env.POSTGRES_PORT) ?? 5432,
-    password: process.env.POSTGRES_PASSWORD ?? 'secret',
-})
+const connectionString = process.env.DATABASE_URL ?? "postgres://postgres:secret@localhost:5432/postgres?sslmode=disable"
+export const pool = new Pool({connectionString})
 
 // TODO: Move everything to error.ts?
 export const HTTP_SUCCESS = 200

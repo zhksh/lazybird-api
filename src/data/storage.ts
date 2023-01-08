@@ -15,6 +15,23 @@ export async function storeUser(pool: Pool, user: User, secret: string) {
         })
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function updateUserRecord(pool: Pool, username: string, updates: { row: string, value: any }[]) {
+    if (updates.length === 0) {
+        return
+    }
+    
+    const values = []
+    const sets = updates.map((update, i) => {
+        values.push(update.value)
+        return `${update.row} = $${ i + 1 }`
+    })
+    values.push(username)
+
+    const sql = `UPDATE users SET ${sets.join(', ')} WHERE username = $${ updates.length + 1 }`
+    await query(pool, sql, values)
+}
+
 export async function storeFollowerRelation(pool: Pool, username: string, followsUsername: string) {
     const sql = `INSERT INTO followers(username, follows_username) VALUES ($1, $2);`
     const values = [username, followsUsername]

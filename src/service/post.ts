@@ -9,7 +9,8 @@ import { BadRequestError } from '../errors'
 import { publish } from './pubsub'
 
 export async function createPost(pool: Pool, username: string, content: string, parameters?: GenerationParameters): Promise<Post> {
-    // TODO: Add incontext posts
+    // TODO: Currently createPost also handles auto complete. Should we remove that and pass in AI generated posts from Client as well?
+
     // TODO: Implement automatic answers
     if (parameters) {
         const completion = await completePost(content, parameters)

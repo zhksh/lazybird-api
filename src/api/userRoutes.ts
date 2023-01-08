@@ -1,8 +1,8 @@
 import express from 'express'
 import { Request, Response } from 'express';
-import { authenticateUser, createUser, getUser } from '../service/user'
+import { authenticateUser, createUser, getUser, updateUser } from '../service/user'
 import { HTTP_SUCCESS, pool, sendMappedError } from './common';
-import { BadRequestError } from '../errors';
+import { BadRequestError, ForbiddenError } from '../errors';
 import { authenticate } from './middleware';
 import { Maybe } from 'monet';
 import { deleteFollowerRelation, storeFollowerRelation } from '../data/storage';
@@ -70,6 +70,22 @@ userRouter.get('/:username', async (req: Request, res: Response) => {
   
   getUser(pool, username)
     .then(user => res.json(user))
+    .catch(err => sendMappedError(res, err))
+})
+
+/**
+ * Update the given user.
+ */
+userRouter.post('/:username', async (req: Request, res: Response) => {
+  const username = (req.params.username === 'me') ? req.body.username : req.params.username
+  
+  if (username !== req.body.username) {
+    sendMappedError(res, new ForbiddenError('not authorized to update the given user'))
+    return
+  }
+
+  updateUser(pool, username, req.body)
+    .then(() => res.sendStatus(HTTP_SUCCESS))
     .catch(err => sendMappedError(res, err))
 })
 
