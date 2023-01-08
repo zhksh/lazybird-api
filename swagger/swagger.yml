@@ -61,7 +61,7 @@ paths:
       security:
         - {}
       requestBody:
-        description: User information
+        description: Login information
         required: true
         content:
           application/json:
@@ -93,6 +93,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserMeta'
+        '404':
+          description: 'No user with the given username was found.'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+        - User
+      summary: Update user
+      description: Update any user info. All fields are optional. Will only work on the logged in user.
+      requestBody:
+        description: User information that should be updated
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: ok
         '404':
           description: 'No user with the given username was found.'
         default:
@@ -141,7 +164,7 @@ paths:
       summary: New post
       description: Create a new post with the given details.
       requestBody:
-        description: User information
+        description: Post 
         required: true
         content:
           application/json:
@@ -166,22 +189,22 @@ paths:
       summary: List posts
       description: Get a paginated list of posts. Use optional query parameters to further specify the returned list.
       parameters:
-        - in: path
+        - in: query
           name: usernames
           schema:
             type: array
           description: Specify usernames to only retrieve posts from these users. User magic 'me' as own username. If no usernames are specified, all posts are returned by the server. For of the usernames either as ?usernames=["username1", "username2"] or as ?usernames=username1&usernames=username2.
-        - in: path
+        - in: query
           name: isUserFeed
           schema:
             type: boolean
           description: If true, only posts from followed users are returned. Valid values are "true" and "1"
-        - in: path
+        - in: query
           name: pageSize
           schema:
             type: number
           description: The maximum number of results returned by the server. If no value is given, a default is used. The server may further constraint the page size.
-        - in: path
+        - in: query
           name: pageToken
           schema:
             type: string
@@ -301,7 +324,7 @@ paths:
       summary: New comment
       description: Add a new comment to the given post.
       requestBody:
-        description: User information
+        description: Comment
         required: true
         content:
           application/json:
@@ -373,6 +396,17 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/User'
+    UserUpdate:
+      type: object
+      properties:
+        iconId:
+          type: string
+          description: Identifies the locally stored icon assigned to the given user.
+        displayName:
+          type: string
+          description: The name that is displayed publically inside the app.
+        password:
+          type: string
     NewPost:
       type: object
       required:
