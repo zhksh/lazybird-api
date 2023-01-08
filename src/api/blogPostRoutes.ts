@@ -4,7 +4,7 @@ import { Either } from 'monet'
 import { GenerationParameters, Post, PostFilter } from '../data/models';
 import { BadRequestError } from '../errors';
 import { createComment, createPost, listPosts, listUserFeed, setPostIsLiked } from '../service/post';
-import { HTTP_SUCCESS } from './codes';
+import { HTTP_SUCCESS } from '../errors';
 import { pool, sendMappedError } from './common';
 import { authenticate } from './middleware';
 

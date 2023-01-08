@@ -3,7 +3,7 @@ import { getPost, postExists } from '../data/storage'
 import { InputEvent, OutputEvent } from '../data/models';
 import { subscribe, Subscription, unsubscribe } from '../service/pubsub'
 import { pool } from './common';
-import { HTTP_BAD_REQUEST, HTTP_INTERNAL_ERROR, HTTP_NOT_FOUND } from './codes';
+import { HTTP_BAD_REQUEST, HTTP_INTERNAL_ERROR, HTTP_NOT_FOUND } from '../errors';
 
 export const wss = new WebSocket.Server({ noServer: true })
 

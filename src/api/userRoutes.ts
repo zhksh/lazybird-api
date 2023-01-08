@@ -1,7 +1,7 @@
 import express from 'express'
 import { Request, Response } from 'express';
 import { authenticateUser, createUser, getUser, updateUser } from '../service/user'
-import { HTTP_SUCCESS, pool, sendMappedError } from './common';
+import { pool, sendMappedError } from './common';
 import { BadRequestError, ForbiddenError } from '../errors';
 import { authenticate } from './middleware';
 import { Maybe } from 'monet';
@@ -85,7 +85,7 @@ userRouter.post('/:username', async (req: Request, res: Response) => {
   }
 
   updateUser(pool, username, req.body)
-    .then(() => res.sendStatus(HTTP_SUCCESS))
+    .then(() => res.sendStatus(200))
     .catch(err => sendMappedError(res, err))
 })
 
@@ -102,7 +102,7 @@ userRouter.post('/:username/follow', async (req: Request, res: Response) => {
   }
 
   storeFollowerRelation(pool, username, followsUsername)
-    .then(() => res.sendStatus(HTTP_SUCCESS))
+    .then(() => res.sendStatus(200))
     .catch(err => sendMappedError(res, err))
 })
 
@@ -114,7 +114,7 @@ userRouter.post('/:username/follow', async (req: Request, res: Response) => {
   const followsUsername = req.params.username
   
   deleteFollowerRelation(pool, username, followsUsername)
-    .then(() => res.sendStatus(HTTP_SUCCESS))
+    .then(() => res.sendStatus(200))
     .catch(err => sendMappedError(res, err))
 })
 

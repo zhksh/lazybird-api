@@ -1,5 +1,3 @@
-import { HTTP_ALREADY_EXISTS, HTTP_BAD_REQUEST, HTTP_FORBIDDEN, HTTP_INTERNAL_ERROR, HTTP_NOT_FOUND, HTTP_UNAUTHORIZED } from "./api/codes"
-
 export class AlreadyExistsError extends Error {
     constructor(msg?: string) {
        super(['the given resource already exists:', msg].join(' ')) 
@@ -65,3 +63,11 @@ export class InternalError extends Error {
         return HTTP_INTERNAL_ERROR
     }
 }
+
+export const HTTP_SUCCESS = 200
+export const HTTP_BAD_REQUEST = 400
+export const HTTP_UNAUTHORIZED = 401
+export const HTTP_ALREADY_EXISTS = 409
+export const HTTP_FORBIDDEN = 403
+export const HTTP_NOT_FOUND = 404
+export const HTTP_INTERNAL_ERROR = 500
