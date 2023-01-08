@@ -164,13 +164,28 @@ paths:
       tags:
         - Blog Post
       summary: List posts
-      description: Get a paginated list of posts.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PostQuery'
+      description: Get a paginated list of posts. Use optional query parameters to further specify the returned list.
+      parameters:
+        - in: path
+          name: usernames
+          schema:
+            type: array
+          description: Specify usernames to only retrieve posts from these users. User magic 'me' as own username. If no usernames are specified, all posts are returned by the server. For of the usernames either as ?usernames=["username1", "username2"] or as ?usernames=username1&usernames=username2.
+        - in: path
+          name: isUserFeed
+          schema:
+            type: boolean
+          description: If true, only posts from followed users are returned. Valid values are "true" and "1"
+        - in: path
+          name: pageSize
+          schema:
+            type: number
+          description: The maximum number of results returned by the server. If no value is given, a default is used. The server may further constraint the page size.
+        - in: path
+          name: pageToken
+          schema:
+            type: string
+          description: Specifies which page to return. If not set or pageToken = "" the first page is returned. Use the 'nextPageToken' returned by previous request to get subsequent pages.
       responses:
         '200':
           description: ok
@@ -395,23 +410,6 @@ components:
         temperature:
           type: number
           description: The randomness, i.e. craziness of the post.
-    PostQuery:
-      type: object
-      properties:
-        usernames:
-          type: array
-          description: Specify usernames to only retrieve posts from these users. User magic 'me' as own username. If no usernames are specified, all posts are returned by the server.
-          items:
-            type: string
-        isUserFeed:
-          type: boolean
-          description: If true, only posts from followed users are returned. 
-        pageSize:
-          type: integer
-          description: The maximum number of results returned by the server. If no value is given, a default is used. The server may further constraint the page size.
-        pageToken:
-          type: string
-          description: Specifies which page to return. If not set or pageToken = "" the first page is returned. Use the 'nextPageToken' returned by previous request to get subsequent pages.
     Post:
       type: object
       required:

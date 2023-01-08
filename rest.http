@@ -35,6 +35,25 @@ POST https://mvsp-api.ncmg.eu/generate/complete
 Content-Type: application/json
 
 {
-"prefix" : "If your mother only knew",
-"temperature" : 0.8
+"prefix" : "If your mother only knew that you",
+"temperature" : 0.3
+}
+
+###
+POST https://mvsp-api.ncmg.eu/generate/complete
+Content-Type: application/json
+
+{
+  "prefix" : "Chuck Norris and Bruce Lee once",
+  "temperature" : 0.3
+}
+
+###
+POST https://mvsp-api.ncmg.eu/generate/complete
+Content-Type: application/json
+
+{
+  "prefix" : "Chuck Norris once",
+  "temperature" : 0.7
+
 }

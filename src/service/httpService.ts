@@ -31,6 +31,7 @@ export async function post(url, data): Promise<string> {
                 );
             }
         ).on('error', function(e){
+            console.log(e.toString());
             reject(e.toString())});
         req.write(dataEncoded);
         req.end();

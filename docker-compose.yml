@@ -13,9 +13,13 @@ services:
 
   api:
     image: ${IMAGE_NAME}:${IMAGE_VERSION}
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     env_file:
       - .env
+    depends_on:
+      - postgres
     networks:
       - backend
     ports:
@@ -26,3 +30,4 @@ volumes:
 
 networks:
   backend:
+    name: ${NETWORK_NAME}

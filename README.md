@@ -26,11 +26,17 @@ This includes a postgres database instance. However, `npm run migrate up` still 
 
 ### Database migrations
 A [migration tool](https://salsita.github.io/node-pg-migrate/#/) is used to setup the postgres database.
-Run the following command to apply all migrations:
+Migrations are defined in the `migrations/` directory.
+
+To run the migrations on the running docker containers just use
+```shell
+bash migrate.sh
+```
+
+Migrations can also be executed through npm using:
 ```shell
 npm run migrate up
 ```
-Migrations are defined in the `migrations/` directory.
 
 ## API Documentation
 The API Documentation can be hosted to `localhost:8080` by running 

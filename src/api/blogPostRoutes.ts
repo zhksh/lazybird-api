@@ -1,7 +1,7 @@
 import express from 'express'
-import { Request, Response } from 'express';
+import { Request, Response } from 'express'
 import { Either } from 'monet'
-import { GenerationParameters, PostMeta, PostFilter } from '../data/models';
+import { GenerationParameters, Post, PostFilter } from '../data/models';
 import { BadRequestError } from '../errors';
 import { createComment, createPost, listPosts, listUserFeed, setPostIsLiked } from '../service/post';
 import { HTTP_SUCCESS } from './codes';
@@ -19,7 +19,7 @@ postsRouter.use(authenticate)
  */
 postsRouter.post('/', async (req: Request, res: Response) => {
   const body = req.body
-  
+
   if (!body.content) {
     sendMappedError(res, new BadRequestError('post content must not be empty'))
     return
@@ -39,15 +39,16 @@ postsRouter.post('/', async (req: Request, res: Response) => {
 /**
  * List posts.
  */
-postsRouter.get('/', async (req: Request, res: Response) => {  
+postsRouter.get('/', async (req: Request, res: Response) => {
   const pagination = {
-    size: parsePageSize(req.body),
-    token: req.body.pageToken,
+    size: parsePageSize(req),
+    token: parsePageToken(req),
   }
-  const filter = parsePostFilter(req.body)
+  const filter = parsePostFilter(req)
+  const isUserFeed = parseIsUserFeed(req)
 
-  let result: Promise<{posts: PostMeta[], nextPageToken: string}>
-  if (req.body.isUserFeed) {
+  let result: Promise<{posts: Post[], nextPageToken: string}>
+  if (isUserFeed) {
     result = listUserFeed(pool, req.body.username, filter, pagination)
   } else {
     result = listPosts(pool, filter, pagination)
@@ -110,22 +111,74 @@ function parseGenerationParameters(body: any): Either<BadRequestError, Generatio
   return Either.right(params)
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function parsePostFilter(body: any): PostFilter {
-  if (body.usernames) {
+function parseIsUserFeed(req: Request): boolean {
+  const isUserFeedString = req.query.isUserFeed as string
+  if (isUserFeedString) {
+    return isUserFeedString.toLocaleLowerCase() === 'true' || isUserFeedString === '1'
+  }
+
+  return false
+}
+
+function parsePostFilter(req: Request): PostFilter {  
+  const usernames = parseUsernames(req)
+
+  console.log('usernames', usernames)
+
+  if (usernames) {
     return {
-      usernames: body.usernames.map((username:string) => username === 'me' ? body.username : username),
+      usernames: usernames.map((username:string) => username === 'me' ? req.body.username : username),
     }
   }
 
   return {}
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function parsePageSize(body: any): number {
-  if (!body.pageSize || body.pageSize <= 0) {
+function parsePageSize(req: Request): number {
+  const sizeString = req.query.pageSize as string
+  if (!sizeString) {
     return 25
   }
 
-  return Math.min(body.pageSize,100)
+  const size = parseInt(sizeString)
+  if (isNaN(size) || size <= 0) {
+    return 25
+  }
+
+  return Math.min(size,100)
+}
+
+function parsePageToken(req: Request): string {
+  const token = req.query.pageToken as string
+  return token
+}
+
+function parseUsernames(req: Request): string[] {
+  if (!req.query.usernames) {
+    return []
+  }
+  
+  if (isArray(req.query.usernames)) {
+    return req.query.usernames as string[]
+  }
+  
+  if (typeof req.query.usernames === 'string') {
+    try {
+      const out = JSON.parse(req.query.usernames)
+      if (isArray(out)) {
+        return out
+      }
+      
+      return []
+    } catch (e) {
+      return [ req.query.usernames ]
+    }
+  }
+
+  return []  
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isArray(obj: any): boolean {
+  return obj.constructor.name === 'Array'
 }
