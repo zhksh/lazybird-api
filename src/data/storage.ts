@@ -156,8 +156,9 @@ export async function getLikeCount(pool: Pool, postId: string): Promise<number> 
         throw new NotFoundError('post not found')
     }
 
-    // TODO: check result
-    return result.rows[0]
+    console.log(result.rows[0])
+
+    return result.rows[0].count
 }
 
 export async function postExists(pool: Pool, postId: string): Promise<boolean> {

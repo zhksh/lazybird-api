@@ -86,7 +86,7 @@ const samplePosts: PostMeta[] = [
     auto_complete: false,
     content: 'Seife, Seife, was ist Seife?',
     timestamp: new Date(2022, 11, 4),
-    commentCount: 0,
+    comments: [],
     likes: 0,
     user: {
       ...sampleUser1,
@@ -97,7 +97,7 @@ const samplePosts: PostMeta[] = [
     auto_complete: true,
     content: 'Das Ablecken von Türknöpfen ist auf anderen Planeten illegal.',
     timestamp: new Date(2022, 11, 3),
-    commentCount: 0,
+    comments: [],
     likes: 0,
     user: {
       ...sampleUser2,
@@ -108,7 +108,7 @@ const samplePosts: PostMeta[] = [
     auto_complete: false,
     content: 'Nein, hier ist Patrick.',
     timestamp: new Date(2022, 11, 2),
-    commentCount: 0,
+    comments: [],
     likes: 0,
     user: {
       ...sampleUser1,
@@ -119,7 +119,7 @@ const samplePosts: PostMeta[] = [
     auto_complete: false,
     content: 'Meine geistig moralischen Mechanismen sind mysteriös und komplex.',
     timestamp: new Date(2022, 11, 1),
-    commentCount: 0,
+    comments: [],
     likes: 0,
     user: {
       ...sampleUser2,
