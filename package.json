@@ -5,6 +5,7 @@
   "main": "src/app.js",
   "scripts": {
     "start": "docker-compose --env-file ./dev.env build && docker-compose --env-file ./dev.env up -d",
+    "down": "docker-compose --env-file ./dev.env down",
     "dev": "tsc && node dist/app.js",
     "build": "tsc",
     "apiDoc": "docker run -it --rm -p 8080:80 -v $(pwd)/swagger/:/usr/share/nginx/html/swagger/ -e SPEC_URL=swagger/swagger.yml redocly/redoc",
