@@ -2,7 +2,7 @@ import { Either } from 'monet'
 import fetch from 'node-fetch'
 import { Pool } from 'pg'
 import { v4 } from 'uuid'
-import { GenerationParameters, PaginationParameters, PostMeta, Post, PostFilter } from '../data/models'
+import { GenerationParameters, PaginationParameters, PostMeta, Post, PostFilter, PageToken } from '../data/models'
 import { deleteLikeRelation, getFollowedUsernames, queryPosts, storeComment, storeLikeRelation, storePost } from '../data/storage'
 import { AUTOCOMPLETE_PATH, BACKEND_HOST } from '../env'
 import { BadRequestError } from '../errors'
@@ -54,18 +54,31 @@ export async function setPostIsLiked(pool: Pool, input: {username: string, postI
     publish(input.postId)
 }
 
-export async function listPosts(pool: Pool, filter: PostFilter, pagination: PaginationParameters): Promise<{posts: PostMeta[], nextPageToken: string}> {
-    const afterDate = decodePageToken(pagination.token)
-                        .leftMap(err => {throw err})
-                        .right()
+export async function listPosts(pool: Pool, filter: PostFilter, pagination: PaginationParameters): Promise<{posts: PostMeta[], nextPageToken: string}> {    
+    const query = {
+        usernames: filter.usernames,
+        after: undefined,
+    }
+    
+    if (pagination.token) {
+        decodePageToken(pagination.token)
+        .cata(
+            err => { throw err }, 
+            token => { query.after = token.date }
+        )
+    }
 
-    const posts = await queryPosts(pool, pagination.size + 1, { after: afterDate, usernames: filter.usernames })
+    const posts = await queryPosts(pool, pagination.size + 1, query)
 
-    // TODO: Currently our pagination could fail, if 2 posts have the exact same timestamp. Solve by adding secondary sort criterion
     let nextPageToken = ""
     if (posts.length > pagination.size) {
+        // TODO: Currently our pagination could fail, if 2 posts have the exact same timestamp. Solve by adding secondary sort criterion. Also, use information of popped entry?
         posts.pop()
-        nextPageToken = encodePageToken(posts[posts.length - 1].timestamp)
+        const last = posts[posts.length - 1]
+        nextPageToken = encodePageToken({
+            date: last.timestamp,
+            id: last.id
+        })
     }
 
     return {
@@ -113,20 +126,17 @@ async function completePost(content: string, parameters: GenerationParameters): 
     })
 }
 
-function encodePageToken(date: Date): string {
-    // TODO: Also encrypt or encode more?
-    return date.toISOString()
+
+function encodePageToken(token: PageToken): string {
+    const str = JSON.stringify(token)
+    return Buffer.from(str).toString('base64')
 }
 
-function decodePageToken(token?: string): Either<BadRequestError, Date | undefined> {
-    if (!token) {
-        return Either.right(undefined)
-    }
-
-    const timestamp = Date.parse(token)
-    if (isNaN(timestamp)) {
+function decodePageToken(token: string): Either<BadRequestError, PageToken> {
+    try {
+        const json = Buffer.from(token, 'base64').toString('binary')
+        return Either.right(JSON.parse(json))
+    } catch (e) {
         return Either.left(new BadRequestError('invalid pageToken'))
     }
-
-    return Either.right(new Date(timestamp))
 }

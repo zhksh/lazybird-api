@@ -1,4 +1,4 @@
-import { HTTP_ALREADY_EXISTS, HTTP_BAD_REQUEST, HTTP_FORBIDDEN, HTTP_NOT_FOUND, HTTP_UNAUTHORIZED } from "./api/codes"
+import { HTTP_ALREADY_EXISTS, HTTP_BAD_REQUEST, HTTP_FORBIDDEN, HTTP_INTERNAL_ERROR, HTTP_NOT_FOUND, HTTP_UNAUTHORIZED } from "./api/codes"
 
 export class AlreadyExistsError extends Error {
     constructor(msg?: string) {
@@ -52,5 +52,16 @@ export class ForbiddenError extends Error {
 
     status(): number {
         return HTTP_FORBIDDEN
+    }
+}
+
+export class InternalError extends Error {
+    constructor() {
+       super('internal error') 
+       this.name = 'InternalError'
+    }
+
+    status(): number {
+        return HTTP_INTERNAL_ERROR
     }
 }

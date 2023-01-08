@@ -47,6 +47,11 @@ export interface PaginationParameters {
     token?: string
 }
 
+export interface PageToken {
+    id: string
+    date: Date
+}
+
 export interface InputEvent {
     eventType: 'subscribe' | 'unsubscribe'
     postId: string

@@ -123,8 +123,6 @@ function parseIsUserFeed(req: Request): boolean {
 function parsePostFilter(req: Request): PostFilter {  
   const usernames = parseUsernames(req)
 
-  console.log('usernames', usernames)
-
   if (usernames) {
     return {
       usernames: usernames.map((username:string) => username === 'me' ? req.body.username : username),
