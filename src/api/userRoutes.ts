@@ -38,10 +38,7 @@ authRouter.post('/', async (req: Request, res: Response) => {
 
   createUser(pool, details, body.password)
   .then(token => {
-    res.json({
-      accessToken: token,
-      tokenType: 'Bearer',
-    })
+    res.json(token)
   })
   .catch(err => sendMappedError(res, err))
 })
@@ -60,10 +57,7 @@ authRouter.post('/auth', async (req: Request, res: Response) => {
 
   authenticateUser(pool, body.username, body.password)
   .then(token => {
-    res.json({
-      accessToken: token,
-      tokenType: 'Bearer',
-    })
+    res.json(token)
   })
   .catch(err => sendMappedError(res, err))  
 })

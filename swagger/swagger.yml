@@ -378,7 +378,6 @@ components:
         temperature:
           type: number
           description: The temperature, i.e. craziness of the post.
-        # TODO: add additional needed parameters
     ContextPost:
       type: object
       required:
