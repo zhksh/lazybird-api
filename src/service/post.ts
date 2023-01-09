@@ -3,13 +3,14 @@ import fetch from 'node-fetch'
 import { Pool } from 'pg'
 import { v4 } from 'uuid'
 import { GenerationParameters, PaginationParameters, PostMeta, Post, PostFilter, PageToken } from '../data/models'
-import { deleteLikeRelation, getFollowedUsernames, queryPosts, storeComment, storeLikeRelation, storePost } from '../data/storage'
+import { deleteLikeRelation, queryPosts, storeComment, storeLikeRelation, storePost } from '../data/postStorage'
+import { getFollowedUsernames } from '../data/userStorage'
 import { AUTOCOMPLETE_PATH, BACKEND_HOST } from '../env'
 import { BadRequestError } from '../errors'
 import { publish } from './pubsub'
 
 export async function createPost(pool: Pool, username: string, content: string, parameters?: GenerationParameters): Promise<Post> {
-    // TODO: Currently createPost also handles auto complete. Should we remove that and pass in AI generated posts from Client as well?
+    // TODO: Currently createPost also handles auto complete. Should we remove that and just pass in AI generated posts from Client?
 
     // TODO: Implement automatic answers
     if (parameters) {
@@ -101,7 +102,6 @@ export async function listUserFeed(pool: Pool, username: string, filter:PostFilt
 async function completePost(content: string, parameters: GenerationParameters): Promise<string> {
     const url = BACKEND_HOST + AUTOCOMPLETE_PATH
     
-    // TODO: Include mood?
     const body = {
         temperature: parameters.temperature,
         prefix: content,

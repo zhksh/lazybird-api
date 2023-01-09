@@ -16,7 +16,6 @@ const subscriptions = new Map<PostId, SubscriptionGroup>()
 const emitter = new EventEmitter()
 
 export async function subscribe(postId: PostId, callback: (postId: string) => Promise<void>): Promise<Subscription> {
-    // TODO: Possible improvement: Could use lock keys to only lock per group and not all subscriptions. Also, could only do read lock for some operations.
     const sub = {
         id: v4(),
         postId,
@@ -36,12 +35,13 @@ export async function subscribe(postId: PostId, callback: (postId: string) => Pr
 }
 
 export async function unsubscribe(sub: Subscription) {
-    // TODO: Could be improved by only acquiring write lock when group is found. Performance gain probably small to none.
     await inWriteLock(() => {
         const group = subscriptions.get(sub.postId)
         if (group) {
-            // TODO: Delete group if empty?
             group.delete(sub.id)
+            if (group.size === 0) {
+                subscriptions.delete(sub.postId)
+            }
         }
     })
 }

@@ -1,5 +1,5 @@
 import * as WebSocket from 'ws'
-import { getPost, postExists } from '../data/storage'
+import { getPost, postExists } from '../data/postStorage'
 import { InputEvent, OutputEvent } from '../data/models';
 import { subscribe, Subscription, unsubscribe } from '../service/pubsub'
 import { pool } from './common';

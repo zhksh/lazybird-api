@@ -2,10 +2,10 @@ import bcrypt from 'bcrypt'
 import { Pool } from 'pg'
 import { SALT_ROUNDS } from '../env'
 import { BadRequestError, UnauthorizedError } from '../errors'
-import { getFollowersForUser, getSecretByUsername, getUserByUsername, storeUser, updateUserRecord } from '../data/storage'
 import { encodeJWT, Token } from './jwt'
 import { User, UserMeta } from '../data/models'
 import { Maybe } from 'monet'
+import { getFollowersForUser, getSecretByUsername, getUserByUsername, storeUser, updateUserRecord } from '../data/userStorage'
 
 export async function createUser(pool: Pool, userDetails: User, password: string): Promise<Token> {
     const validationErr = validateUsername(userDetails.username)

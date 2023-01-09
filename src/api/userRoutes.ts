@@ -5,7 +5,7 @@ import { pool, sendMappedError } from './common';
 import { BadRequestError, ForbiddenError } from '../errors';
 import { authenticate } from './middleware';
 import { Maybe } from 'monet';
-import { deleteFollowerRelation, storeFollowerRelation } from '../data/storage';
+import { deleteFollowerRelation, storeFollowerRelation } from '../data/userStorage';
 
 /**
  * Defines all routes necessary for authorization. 
