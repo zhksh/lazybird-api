@@ -14,12 +14,15 @@ before(() => createTestingDatabase().then(writeTestData).catch(e => assert.fail(
 after(() => teardownTestingDatabase().catch(err => console.error('failed to teardown database', err)))
 
 describe('queryPosts', function() {
-  it('after filter works as expected', async function() {
+  it('page filter works as expected', async function() {
     try {
-      const page1 = await queryPosts(pool, 2, {})
-      assert.equal(page1.length, 2)
-      const page2 = await queryPosts(pool, 2, { after: page1[1].timestamp })
-      assert.deepEqual(page1.concat(page2), samplePosts)
+      const page = {
+        date: samplePosts[2].timestamp,
+        id: samplePosts[2].id,
+      }
+      const got = await queryPosts(pool, 2, { page })
+      const want = [samplePosts[2], samplePosts[3]]
+      assert.deepEqual(got, want)
     } catch(e) {
       assert.fail(e)
     }
@@ -33,9 +36,13 @@ describe('queryPosts', function() {
       assert.fail(e)
     }
   });
-  it('user and after filter work together as expected', async function() {
+  it('user and page filter work together as expected', async function() {
     try {
-      const got = await queryPosts(pool, 2, { after: samplePosts[1].timestamp, usernames: [sampleUser1.username] })      
+      const page = {
+        date: samplePosts[2].timestamp,
+        id: samplePosts[2].id,
+      }
+      const got = await queryPosts(pool, 2, { page, usernames: [sampleUser1.username] })      
       const want = [samplePosts[2]]
       assert.deepEqual(got, want)
     } catch(e) {

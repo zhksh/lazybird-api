@@ -58,14 +58,14 @@ export async function setPostIsLiked(pool: Pool, input: {username: string, postI
 export async function listPosts(pool: Pool, filter: PostFilter, pagination: PaginationParameters): Promise<{posts: PostMeta[], nextPageToken: string}> {    
     const query = {
         usernames: filter.usernames,
-        after: undefined,
+        page: undefined,
     }
     
     if (pagination.token) {
         decodePageToken(pagination.token)
         .cata(
             err => { throw err }, 
-            token => { query.after = token.date }
+            page => { query.page = page }
         )
     }
 
@@ -73,12 +73,11 @@ export async function listPosts(pool: Pool, filter: PostFilter, pagination: Pagi
 
     let nextPageToken = ""
     if (posts.length > pagination.size) {
-        // TODO: Currently our pagination could fail, if 2 posts have the exact same timestamp. Solve by adding secondary sort criterion. Also, use information of popped entry?
-        posts.pop()
-        const last = posts[posts.length - 1]
+        const nextEntry = posts.pop()
+        posts[posts.length - 1]
         nextPageToken = encodePageToken({
-            date: last.timestamp,
-            id: last.id
+            date: nextEntry.timestamp,
+            id: nextEntry.id
         })
     }
 

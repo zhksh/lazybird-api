@@ -1,7 +1,7 @@
 import { Pool } from "pg"
 import { InternalError, NotFoundError } from "../errors"
 import { isDuplicateKeyError, isForeignKeyError, query } from "./common"
-import { PostMeta, Post, Comment } from "./models"
+import { PostMeta, Post, Comment, PageToken } from "./models"
 
 export async function storePost(pool: Pool, post: Post, username: string) {
     const sql = `INSERT INTO posts(id, username, content, auto_complete, timestamp) VALUES ($1, $2, $3, $4, $5);`
@@ -94,18 +94,23 @@ export async function postExists(pool: Pool, postId: string): Promise<boolean> {
     return result.rows.length >= 1
 }
 
-export async function queryPosts(pool: Pool, limit: number, filter?: {after?: Date, usernames?: string[]}): Promise<PostMeta[]>{
+export async function queryPosts(pool: Pool, limit: number, filter?: {page?: PageToken, usernames?: string[]}): Promise<PostMeta[]>{
     const values = []
     const conditions = []
     let argument = 1
     
     if (filter) {
-        if (filter.after) {
-            conditions.push(`timestamp < $${argument++}`)
-            values.push(filter.after)
+        if (filter.page) {
+            conditions.push(`timestamp <= $${argument++}`)
+            values.push(filter.page.date)
+
+            /*
+            conditions.push(`id <= $${argument++}`)
+            values.push(filter.page.id)
+            */
         }
     
-        if (filter.usernames) {
+        if (filter.usernames && filter.usernames.length > 0) {
             conditions.push(`posts.username = ANY($${argument++}::text[])`)
             values.push(filter.usernames)
         }
@@ -122,6 +127,8 @@ export async function queryPosts(pool: Pool, limit: number, filter?: {after?: Da
         ORDER BY timestamp DESC
         LIMIT $${argument++};
     `
+    console.log(sql)
+
     const result = await query(pool, sql, values)
     
     const posts = result.rows.map(async row => {
