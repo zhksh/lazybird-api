@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken'
 import { Either } from 'monet'
 import { JWT_ACCESS_SECRET } from "../env"
+import { logger } from '../logger'
 
 export interface Payload {    
     username: string
@@ -21,6 +22,10 @@ export function encodeJWT(payload: Payload): Either<Error, Token> {
         
         return Either.right(token)
     } catch(e) {
+        logger.error({
+            message: 'failed to encode JWT',
+            error: e,
+        })
         return Either.left(e)
     }
 }
@@ -30,6 +35,10 @@ export function decodeJWT(token: string): Either<Error, Payload> {
         const decoded = jwt.verify(token, JWT_ACCESS_SECRET, {})
         return Either.right(decoded as Payload)        
     } catch(e) {
+        logger.error({
+            message: 'failed to decode JWT',
+            error: e,
+        })
         return Either.left(e)
     }
 }

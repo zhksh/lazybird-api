@@ -36,14 +36,14 @@ export async function updateUser(pool: Pool, username: string, update: { display
 
     if (update.displayName) {
         updates.push({
-            row: 'display_name', 
+            row: 'display_name',
             value: update.displayName,
         })
     }
 
     if (update.iconId) {
         updates.push({
-            row: 'icon_id', 
+            row: 'icon_id',
             value: update.iconId,
         })
     }
@@ -51,7 +51,7 @@ export async function updateUser(pool: Pool, username: string, update: { display
     if (update.password) {
         const hash = await hashPassword(update.password)
         updates.push({
-            row: 'secret', 
+            row: 'secret',
             value: hash,
         })
     }
