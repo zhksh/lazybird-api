@@ -14,7 +14,15 @@ before(() => createTestingDatabase().then(writeTestData).catch(e => assert.fail(
 after(() => teardownTestingDatabase().catch(err => console.error('failed to teardown database', err)))
 
 describe('queryPosts', function() {
-  it('page filter works as expected', async function() {
+  it('query all posts works as expected', async function() {
+    try {
+      const got = await queryPosts(pool, 4)
+      assert.deepEqual(got, samplePosts)
+    } catch(e) {
+      assert.fail(e)
+    }
+  });
+  it('page filter works as expected on different date', async function() {
     try {
       const page = {
         date: samplePosts[2].timestamp,
@@ -22,6 +30,19 @@ describe('queryPosts', function() {
       }
       const got = await queryPosts(pool, 2, { page })
       const want = [samplePosts[2], samplePosts[3]]
+      assert.deepEqual(got, want)
+    } catch(e) {
+      assert.fail(e)
+    }
+  });
+  it('page filter works as expected on same date', async function() {
+    try {
+      const page = {
+        date: samplePosts[1].timestamp,
+        id: samplePosts[1].id,
+      }
+      const got = await queryPosts(pool, 2, { page })
+      const want = [samplePosts[1], samplePosts[2]]
       assert.deepEqual(got, want)
     } catch(e) {
       assert.fail(e)
@@ -87,7 +108,7 @@ const sampleUser2: User = {
 
 const samplePosts: PostMeta[] = [
   {
-    id: '1',
+    id: 'A',
     auto_complete: false,
     content: 'Seife, Seife, was ist Seife?',
     timestamp: new Date(Date.UTC(2022, 11, 4)),
@@ -96,26 +117,26 @@ const samplePosts: PostMeta[] = [
     user: sampleUser1,
   },
   {
-    id: '2',
+    id: 'C',
     auto_complete: true,
     content: 'Das Ablecken von Türknöpfen ist auf anderen Planeten illegal.',
-    timestamp: new Date(Date.UTC(2022, 11, 3)),
+    timestamp: new Date(Date.UTC(2022, 11, 4)),
     comments: [],
     likes: 0,
     user: sampleUser2,
     
   },
   {
-    id: '3',
+    id: 'D',
     auto_complete: false,
     content: 'Nein, hier ist Patrick.',
-    timestamp: new Date(Date.UTC(2022, 11, 2)),
+    timestamp: new Date(Date.UTC(2022, 11, 4)),
     comments: [],
     likes: 0,
     user: sampleUser1,
   },
   {
-    id: '4',
+    id: 'B',
     auto_complete: false,
     content: 'Meine geistig moralischen Mechanismen sind mysteriös und komplex.',
     timestamp: new Date(Date.UTC(2022, 11, 1)),
@@ -161,7 +182,7 @@ async function createTestingDatabase() {
   pool = new Pool(config)
 
   // Wait until database is ready
-  // await new Promise(resolve => setTimeout(resolve, 10))
+  await new Promise(resolve => setTimeout(resolve, 10))
 }
 
 async function teardownTestingDatabase() {
