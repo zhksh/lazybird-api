@@ -104,11 +104,13 @@ export async function queryPosts(pool: Pool, limit: number, filter?: {page?: Pag
             conditions.push(`timestamp <= $${argument++}`)
             values.push(filter.page.date)
 
+            /*
             conditions.push(`id <= $${argument++}`)
             values.push(filter.page.id)
+            */
         }
     
-        if (filter.usernames) {
+        if (filter.usernames && filter.usernames.length > 0) {
             conditions.push(`posts.username = ANY($${argument++}::text[])`)
             values.push(filter.usernames)
         }
@@ -122,7 +124,7 @@ export async function queryPosts(pool: Pool, limit: number, filter?: {page?: Pag
     `SELECT id, content, auto_complete, timestamp, users.username, icon_id, display_name 
         FROM posts JOIN users ON posts.username = users.username 
         ${where} 
-        ORDER BY timestamp DESC id DESC
+        ORDER BY timestamp DESC
         LIMIT $${argument++};
     `
     console.log(sql)
