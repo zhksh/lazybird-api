@@ -1,5 +1,5 @@
 import { Pool } from "pg"
-import { NotFoundError } from "../errors"
+import { InternalError, NotFoundError } from "../errors"
 import { isDuplicateKeyError, isForeignKeyError, query } from "./common"
 import { PostMeta, Post, Comment } from "./models"
 
@@ -80,7 +80,12 @@ export async function getLikeCount(pool: Pool, postId: string): Promise<number> 
         throw new NotFoundError('post not found')
     }
 
-    return result.rows[0].count
+    const count = parseInt(result.rows[0].count)
+    if (isNaN(count)) {
+        throw new InternalError()
+    }
+
+    return count
 }
 
 export async function postExists(pool: Pool, postId: string): Promise<boolean> {

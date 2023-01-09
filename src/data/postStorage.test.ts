@@ -2,7 +2,8 @@ import { assert } from 'chai'
 import 'mocha'
 import { Pool } from 'pg'
 import { PostMeta, User } from './models';
-import { getFollowedUsernames, queryPosts, storeFollowerRelation, storePost, storeUser } from './storage'
+import { getFollowedUsernames, storeFollowerRelation, storeUser } from './userStorage'
+import { queryPosts, storePost } from './postStorage'
 import migrate from 'node-pg-migrate'
 
 let pool: Pool
@@ -15,9 +16,6 @@ after(() => teardownTestingDatabase().catch(err => console.error('failed to tear
 describe('queryPosts', function() {
   it('after filter works as expected', async function() {
     try {
-      // TODO: Fix me. Database is not ready when test starts
-      await new Promise(resolve => setTimeout(resolve, 10))
-
       const page1 = await queryPosts(pool, 2, {})
       assert.equal(page1.length, 2)
       const page2 = await queryPosts(pool, 2, { after: page1[1].timestamp })
@@ -85,45 +83,38 @@ const samplePosts: PostMeta[] = [
     id: '1',
     auto_complete: false,
     content: 'Seife, Seife, was ist Seife?',
-    timestamp: new Date(2022, 11, 4),
+    timestamp: new Date(Date.UTC(2022, 11, 4)),
     comments: [],
     likes: 0,
-    user: {
-      ...sampleUser1,
-    }
+    user: sampleUser1,
   },
   {
     id: '2',
     auto_complete: true,
     content: 'Das Ablecken von Türknöpfen ist auf anderen Planeten illegal.',
-    timestamp: new Date(2022, 11, 3),
+    timestamp: new Date(Date.UTC(2022, 11, 3)),
     comments: [],
     likes: 0,
-    user: {
-      ...sampleUser2,
-    }
+    user: sampleUser2,
+    
   },
   {
     id: '3',
     auto_complete: false,
     content: 'Nein, hier ist Patrick.',
-    timestamp: new Date(2022, 11, 2),
+    timestamp: new Date(Date.UTC(2022, 11, 2)),
     comments: [],
     likes: 0,
-    user: {
-      ...sampleUser1,
-    }
+    user: sampleUser1,
   },
   {
     id: '4',
     auto_complete: false,
     content: 'Meine geistig moralischen Mechanismen sind mysteriös und komplex.',
-    timestamp: new Date(2022, 11, 1),
+    timestamp: new Date(Date.UTC(2022, 11, 1)),
     comments: [],
     likes: 0,
-    user: {
-      ...sampleUser2,
-    }
+    user: sampleUser2,
   },
 ]
 
@@ -161,6 +152,9 @@ async function createTestingDatabase() {
   })
 
   pool = new Pool(config)
+
+  // Wait until database is ready
+  // await new Promise(resolve => setTimeout(resolve, 10))
 }
 
 async function teardownTestingDatabase() {
