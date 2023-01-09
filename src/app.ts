@@ -6,11 +6,12 @@ import { postsRouter } from './api/blogPostRoutes'
 import { PORT } from './env'
 import { pool } from './api/common'
 import { wss } from './api/websocket'
-import { logger } from './logger'
+import { logRequest } from './api/middleware'
 
 const app = express()
 
 app.use(express.json())
+app.use(logRequest)
 app.use('/users', authRouter)
 app.use('/users', userRouter)
 app.use('/posts', postsRouter)
@@ -23,8 +24,6 @@ app.get('/', (req, res) => {
 app.use(errorhandler({ dumpExceptions: true, showStack: true }));
 
 const server = app.listen(PORT, () => console.log(`api running on http://localhost:${PORT}`))
-
-logger.error('failed successfully')
 
 server.on('upgrade', (request, socket, head) => {
     wss.handleUpgrade(request, socket, head, socket => {

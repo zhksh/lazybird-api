@@ -3,6 +3,22 @@ import { decodeJWT } from '../service/jwt'
 import { Either } from "monet"
 import { BadRequestError, UnauthorizedError } from "../errors"
 import { sendMappedError } from "./common"
+import { logger } from "../logger"
+
+export const logRequest = (req: Request, res: Response, next: NextFunction) => {        
+    res.on('finish', () => {
+        logger.http({
+            method: req.method,
+            route: req.originalUrl,
+            status: res.statusCode,
+            statusMessage: res.statusMessage,
+            body: req.body,
+            query: req.query,
+        })
+    })
+    
+    next()
+}
 
 /**
  * Middleware that checks for a JWT token and if one is present, decodes it and sets body.username.
