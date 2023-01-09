@@ -91,7 +91,7 @@ export async function listUserFeed(pool: Pool, username: string, filter:PostFilt
     let followed = await getFollowedUsernames(pool, username)
     followed.push(username)
 
-    if (filter.usernames) {
+    if (filter.usernames && filter.usernames.length > 0) {
         followed = followed.filter(username => filter.usernames.includes(username))
     }
 

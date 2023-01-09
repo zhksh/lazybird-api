@@ -101,13 +101,11 @@ export async function queryPosts(pool: Pool, limit: number, filter?: {page?: Pag
     
     if (filter) {
         if (filter.page) {
-            conditions.push(`timestamp <= $${argument++}`)
+            const timestampArg = argument++
+            conditions.push(`(timestamp < $${timestampArg} OR (timestamp = $${timestampArg} AND id >= $${argument++}))`)
+            
             values.push(filter.page.date)
-
-            /*
-            conditions.push(`id <= $${argument++}`)
             values.push(filter.page.id)
-            */
         }
     
         if (filter.usernames && filter.usernames.length > 0) {
@@ -124,13 +122,11 @@ export async function queryPosts(pool: Pool, limit: number, filter?: {page?: Pag
     `SELECT id, content, auto_complete, timestamp, users.username, icon_id, display_name 
         FROM posts JOIN users ON posts.username = users.username 
         ${where} 
-        ORDER BY timestamp DESC
+        ORDER BY timestamp DESC, id ASC
         LIMIT $${argument++};
     `
-    console.log(sql)
 
     const result = await query(pool, sql, values)
-    
     const posts = result.rows.map(async row => {
         const likes = await getLikeCount(pool, row.id)
         const comments = await getComments(pool, row.id)
