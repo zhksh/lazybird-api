@@ -5,23 +5,35 @@ export async function createInContextPost(data: any): Promise<string>{
     const temperature: number = data.temperature
     const postId: number = data.postId
     const turns: number = data.turns
+    const mood: string = data.mood
 
     const dummmy_payload = JSON.parse(JSON.stringify({
         "context" : [
             {
-                "input": "Hi Dude",
-                "output": "Hi man, what are you up to ?",
-                "ts": 123918273,
-                "source": "lm"
+                "msg": "Hi Dude",
+                "ts": 123918271,
+                "userid" : 1,
+                "source": "lm",
+                "postid" : 87
             },
             {
-                "input": "Not much, working mostly.",
-                "output": "Thats too bad im in Malaga !",
-                "ts": 123918373,
-                "source": "user"
-            }
+                "msg": "Hi man, what are you up to ?",
+                "ts": 123918372,
+                "userid" : 2,
+                "source": "user",
+                "postid" : 23
+
+            },
+            {
+                "msg": "Hi Dude",
+                "ts": 123918273,
+                "userid" : 3,
+                "source": "lm",
+                "postid" : 212
+            },
         ],
-        "temperature": temperature
+        "temperature": temperature,
+        "mood": mood
     }));
 
     const url = BACKEND_HOST + IN_CONTEXT_PATH
@@ -30,6 +42,8 @@ export async function createInContextPost(data: any): Promise<string>{
 
 export async function complete(data: any): Promise<string>{
     const url = BACKEND_HOST + AUTOCOMPLETE_PATH
+    //set this flag if our LM is to be used
+    // data['ours'] = 'true'
 
     return post(url, data)
 }

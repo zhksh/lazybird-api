@@ -3,6 +3,7 @@ import {TIMEOUT} from "../env";
 
 export async function post(url, data): Promise<string> {
     const dataEncoded = JSON.stringify(data)
+    console.log(dataEncoded)
 
     const options = {
         method: 'POST',

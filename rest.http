@@ -13,7 +13,8 @@ Content-Type: application/json
 
 {
   "prefix" : "If your mother only knew",
-  "temperature" : 0.8
+  "temperature" : 0.8,
+  "mood" : "funky"
 }
 ####
 Content-Type: application/json
@@ -36,7 +37,8 @@ Content-Type: application/json
 
 {
 "prefix" : "If your mother only knew that you",
-"temperature" : 0.3
+"temperature" : 0.3,
+  "mood" : "fancybear"
 }
 
 ###
