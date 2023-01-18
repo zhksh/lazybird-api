@@ -78,5 +78,7 @@ function validateUsername(username: string) : Maybe<BadRequestError> {
         return Maybe.some(new BadRequestError('username must only contain letters and numbers'))
     }
     
+    // TODO: Add length restriction
+
     return Maybe.none()
 }

@@ -67,7 +67,7 @@ async function sendPost(socket: WebSocket.WebSocket, postId: string) {
         }
         socket.send(JSON.stringify(output))
     } catch(e) {
-        // TODO: Log error
+        console.log("failed to send post:", e)
         socket.send(JSON.stringify(makeErrorEvent(HTTP_INTERNAL_ERROR, 'internal error')))
     }
 }

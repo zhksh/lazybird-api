@@ -47,9 +47,9 @@ export async function createComment(pool: Pool, input: {username: string, postId
  */
 export async function setPostIsLiked(pool: Pool, input: {username: string, postId: string, isLiked: boolean}) {
     if (input.isLiked) {
-        storeLikeRelation(pool, input.username, input.postId)
+        await storeLikeRelation(pool, input.username, input.postId)
     } else {
-        deleteLikeRelation(pool, input.username, input.postId)
+        await deleteLikeRelation(pool, input.username, input.postId)
     }
 
     publish(input.postId)
