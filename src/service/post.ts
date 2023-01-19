@@ -7,6 +7,7 @@ import { deleteLikeRelation, queryPosts, storeComment, storeLikeRelation, storeP
 import { getFollowedUsernames } from '../data/userStorage'
 import { AUTOCOMPLETE_PATH, BACKEND_HOST } from '../env'
 import { BadRequestError } from '../errors'
+import { logger } from '../logger'
 import { publish } from './pubsub'
 
 export async function createPost(pool: Pool, username: string, content: string, parameters?: GenerationParameters): Promise<Post> {
@@ -115,11 +116,14 @@ async function completePost(content: string, parameters: GenerationParameters): 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .then((json: any) => {
         if (json.error) {
-            console.error('failed to complete post', json)
+            logger.error({
+                message: 'failed to complete post',
+                parameters: parameters,
+                response: json,
+            })
+
             throw new Error(json.message)
         }
-
-        console.log(json)
 
         return json.response
     })
@@ -136,6 +140,12 @@ function decodePageToken(token: string): Either<BadRequestError, PageToken> {
         const json = Buffer.from(token, 'base64').toString('binary')
         return Either.right(JSON.parse(json))
     } catch (e) {
+        logger.error({
+            message: 'failed to decode pageToken',
+            pageToken: token,
+            response: e,
+        })
+
         return Either.left(new BadRequestError('invalid pageToken'))
     }
 }

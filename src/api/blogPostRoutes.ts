@@ -47,7 +47,7 @@ postsRouter.get('/', async (req: Request, res: Response) => {
   const filter = parsePostFilter(req)
   const isUserFeed = parseIsUserFeed(req)
 
-  let result: Promise<{posts: Post[], nextPageToken: string}>
+  let result: Promise<{ posts: Post[], nextPageToken: string }>
   if (isUserFeed) {
     result = listUserFeed(pool, req.body.username, filter, pagination)
   } else {

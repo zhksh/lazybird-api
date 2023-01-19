@@ -6,10 +6,12 @@ import { postsRouter } from './api/blogPostRoutes'
 import { PORT } from './env'
 import { pool } from './api/common'
 import { wss } from './api/websocket'
+import { logRequest } from './api/middleware'
 
 const app = express()
 
 app.use(express.json())
+app.use(logRequest)
 app.use('/users', authRouter)
 app.use('/users', userRouter)
 app.use('/posts', postsRouter)
