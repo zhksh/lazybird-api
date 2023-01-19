@@ -23,7 +23,7 @@ export interface Post {
  */
 export interface PostMeta extends Post {
     user: User
-    likes: number
+    likes: string[]
     comments: Comment[]
 }
 
