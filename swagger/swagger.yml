@@ -473,8 +473,10 @@ components:
           $ref: '#/components/schemas/User'
           description: The author of the post.
         likes:
-          type: integer
-          description: The number of likes added to the comment.
+          type: array
+          items:
+            type: string
+          description: The usernames of all accounts that liked the post.
         comments:
           type: array
           items:
