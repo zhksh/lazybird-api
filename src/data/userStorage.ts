@@ -7,7 +7,7 @@ import { User } from "./models";
 export async function storeUser(pool: Pool, user: User, secret: string) {
     const sql = `INSERT INTO users(username, secret, icon_id, display_name) VALUES ($1, $2, $3, $4);`
     const values = [user.username, secret, user.icon_id, user.display_name]
-    
+
     await query(pool, sql, values)
         .catch(err => {
             if (isDuplicateKeyError(err)) {
@@ -22,15 +22,15 @@ export async function updateUserRecord(pool: Pool, username: string, updates: { 
     if (updates.length === 0) {
         return
     }
-    
+
     const values = []
     const sets = updates.map((update, i) => {
         values.push(update.value)
-        return `${update.row} = $${ i + 1 }`
+        return `${update.row} = $${i + 1}`
     })
     values.push(username)
 
-    const sql = `UPDATE users SET ${sets.join(', ')} WHERE username = $${ updates.length + 1 }`
+    const sql = `UPDATE users SET ${sets.join(', ')} WHERE username = $${updates.length + 1}`
     await query(pool, sql, values)
 }
 
@@ -60,8 +60,8 @@ export async function deleteFollowerRelation(pool: Pool, username: string, follo
 
 export async function getSecretByUsername(pool: Pool, username: string): Promise<string> {
     const sql = `SELECT secret FROM users WHERE users.username = $1;`
-    
-    const result = await query(pool, sql, [username])        
+
+    const result = await query(pool, sql, [username])
     if (result.rowCount < 1) {
         throw new NotFoundError('user not found')
     }
@@ -71,7 +71,7 @@ export async function getSecretByUsername(pool: Pool, username: string): Promise
 
 export async function getUserByUsername(pool: Pool, username: string): Promise<User> {
     const sql = `SELECT username, icon_id, display_name FROM users WHERE users.username = $1;`
-    
+
     const result = await query(pool, sql, [username])
     if (result.rowCount < 1) {
         throw new NotFoundError('user not found')
@@ -81,9 +81,9 @@ export async function getUserByUsername(pool: Pool, username: string): Promise<U
 }
 
 export async function getFollowersForUser(pool: Pool, username: string): Promise<User[]> {
-    const sql = 
-    `SELECT users.username, icon_id, display_name FROM users JOIN followers ON users.username = followers.follows_username WHERE follows_username = $1;`
-    
+    const sql =
+        `SELECT users.username, icon_id, display_name FROM users JOIN followers ON users.username = followers.username WHERE follows_username = $1;`
+
     const result = await query(pool, sql, [username])
     return result.rows
 }
