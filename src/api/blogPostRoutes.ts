@@ -29,7 +29,7 @@ postsRouter.post('/', async (req: Request, res: Response) => {
   .cata(
     err => sendMappedError(res, err),
     params => {
-      createPost(pool, body.username, body.content, params)
+      createPost(pool, body.username, body.content, body.autogenerateAnswers, params)
         .then(post => res.json(post))
         .catch(err => sendMappedError(res, err))
     }

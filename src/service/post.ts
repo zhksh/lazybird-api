@@ -3,26 +3,25 @@ import fetch from 'node-fetch'
 import { Pool } from 'pg'
 import { v4 } from 'uuid'
 import { GenerationParameters, PaginationParameters, PostMeta, Post, PostFilter, PageToken } from '../data/models'
-import { deleteLikeRelation, queryPosts, storeComment, storeLikeRelation, storePost } from '../data/postStorage'
+import {
+    deleteLikeRelation,
+    handleComment,
+    queryPosts,
+    storeComment,
+    storeLikeRelation,
+    storePost
+} from '../data/postStorage'
 import { getFollowedUsernames } from '../data/userStorage'
-import { AUTOCOMPLETE_PATH, BACKEND_HOST } from '../env'
 import { BadRequestError } from '../errors'
 import { logger } from '../logger'
 import { publish } from './pubsub'
 
-export async function createPost(pool: Pool, username: string, content: string, parameters?: GenerationParameters): Promise<Post> {
-    // TODO: Currently createPost also handles auto complete. Should we remove that and just pass in AI generated posts from Client?
-
-    // TODO: Implement automatic answers
-    if (parameters) {
-        const completion = await completePost(content, parameters)
-        content = [content, completion].join(' ')
-    }
+export async function createPost(pool: Pool, username: string, content: string, autocomplete: boolean,parameters?: GenerationParameters): Promise<Post> {
     
     const post: Post = {
         id: v4(),
         content: content,
-        auto_complete: parameters !== undefined,
+        auto_complete: autocomplete,
         timestamp: new Date(),
     }
     
@@ -38,7 +37,8 @@ export async function createComment(pool: Pool, input: {username: string, postId
         ...input,
     }
     
-    await storeComment(pool, comment)
+    // await storeComment(pool, comment)
+    await handleComment(pool, comment)
 
     publish(input.postId)
 }
@@ -97,36 +97,6 @@ export async function listUserFeed(pool: Pool, username: string, filter:PostFilt
     }
 
     return listPosts(pool, { usernames: followed }, pagination)
-}
-
-async function completePost(content: string, parameters: GenerationParameters): Promise<string> {
-    const url = BACKEND_HOST + AUTOCOMPLETE_PATH
-    
-    const body = {
-        temperature: parameters.temperature,
-        prefix: content,
-    }
-
-    return fetch(url, {
-        method: 'post',
-        body: JSON.stringify(body),
-        headers: {'Content-Type': 'application/json'}
-    })
-    .then(res => res.json())
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .then((json: any) => {
-        if (json.error) {
-            logger.error({
-                message: 'failed to complete post',
-                parameters: parameters,
-                response: json,
-            })
-
-            throw new Error(json.message)
-        }
-
-        return json.response
-    })
 }
 
 

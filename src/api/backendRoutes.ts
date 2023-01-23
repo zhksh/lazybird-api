@@ -1,9 +1,11 @@
 import express from 'express'
 import { HTTP_INTERNAL_ERROR, HTTP_SUCCESS } from '../errors';
 import {complete, createInContextPost} from "../service/postGeneraton";
+import {authenticate} from "./middleware";
 
 export const backendRouter = express.Router()
 
+backendRouter.use(authenticate)
 /**
  * This Api will alows return a json, no matter if something internally or externaly went wrong
  * if somehting on this side went wrong there will be an "error" field

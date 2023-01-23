@@ -1,7 +1,9 @@
 import { Pool } from "pg"
-import { NotFoundError } from "../errors"
+import {HTTP_INTERNAL_ERROR, HTTP_SUCCESS, NotFoundError} from "../errors"
 import { isDuplicateKeyError, isForeignKeyError, query } from "./common"
 import { PostMeta, Post, Comment, PageToken } from "./models"
+import {createInContextPost} from "../service/postGeneraton";
+import {createComment} from "../service/post";
 
 export async function storePost(pool: Pool, post: Post, username: string) {
     const sql = `INSERT INTO posts(id, username, content, auto_complete, timestamp) VALUES ($1, $2, $3, $4, $5);`
@@ -21,6 +23,26 @@ export async function storeComment(pool: Pool, comment: {id: string, username: s
             throw err
         })
 }
+
+export async function handleComment(pool: Pool, comment: {id: string, username: string, postId: string, content: string, timestamp?: Date}) {
+    await storeComment(pool, comment)
+    handleAutoreply(pool, comment)
+}
+
+async function handleAutoreply(pool: Pool, comment: {id: string, username: string, postId: string, content: string, timestamp?: Date} ){
+    const post = await  getPost(pool, comment.postId)
+    //unfortuntaly we dant really have a notion of converstion beyod replies to the original post
+    if (post.auto_complete && post.user.username != comment.username){
+        const resp = createInContextPost({temperature :0.5, mood: "ironic", context: [
+            {"source": "me", "msg": post.content}, {"source": "you", "msg" : comment.content}]})
+        resp.then((backendResponse) => {
+            createComment(pool, {username: post.user.username, postId: post.id, content: JSON.parse(backendResponse).response})
+        }).catch((err) => {
+            console.log("autoresponse failed: " + err.toString())
+        })
+    }
+}
+
 
 export async function storeLikeRelation(pool: Pool, username: string, postId: string) {
     const sql = `INSERT INTO likes(username, post_id) VALUES ($1, $2);`
