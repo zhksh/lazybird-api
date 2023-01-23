@@ -66,3 +66,13 @@ export interface Error {
     code: number
     message: string
 }
+
+export interface CommentHistory {
+    original: string,
+    history: HistoryItem[]
+}
+
+export interface HistoryItem {
+    source: string,
+    msg: string
+}

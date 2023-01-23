@@ -2,7 +2,7 @@ import { Pool } from "pg"
 import {HTTP_INTERNAL_ERROR, HTTP_SUCCESS, NotFoundError} from "../errors"
 import { isDuplicateKeyError, isForeignKeyError, query } from "./common"
 import { PostMeta, Post, Comment, PageToken } from "./models"
-import {createInContextPost} from "../service/postGeneraton";
+import {buildHistory, createInContextPost} from "../service/postGeneraton";
 import {createComment} from "../service/post";
 
 export async function storePost(pool: Pool, post: Post, username: string) {
@@ -31,10 +31,10 @@ export async function handleComment(pool: Pool, comment: {id: string, username: 
 
 async function handleAutoreply(pool: Pool, comment: {id: string, username: string, postId: string, content: string, timestamp?: Date} ){
     const post = await  getPost(pool, comment.postId)
-    //unfortuntaly we dant really have a notion of converstion beyod replies to the original post
     if (post.auto_complete && post.user.username != comment.username){
-        const resp = createInContextPost({temperature :0.5, mood: "ironic", context: [
-            {"source": "me", "msg": post.content}, {"source": "you", "msg" : comment.content}]})
+        const history = buildHistory(post, 4)
+        const resp = createInContextPost({temperature :0.5, mood: "ironic", context: history.history})
+
         resp.then((backendResponse) => {
             createComment(pool, {username: post.user.username, postId: post.id, content: JSON.parse(backendResponse).response})
         }).catch((err) => {
@@ -85,7 +85,7 @@ export async function getPost(pool: Pool, postId: string): Promise<PostMeta> {
     const sql = 
     `SELECT posts.id, content, auto_complete, timestamp, users.username, icon_id, display_name 
         FROM posts JOIN users ON posts.username = users.username
-        WHERE posts.id = $1;
+        WHERE posts.id = $1 order by timestamp asc;
     `
     const result = await query(pool, sql, [postId])
     if (result.rows.length === 0) {
