@@ -25,5 +25,3 @@ export async function complete(data: any): Promise<string>{
 
     return post(url, data)
 }
-
-export function buildContext(data: any): Dict<String>
