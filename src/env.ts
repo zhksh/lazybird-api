@@ -5,8 +5,8 @@ export const SALT_ROUNDS = 8
 export const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET ?? 'dev_only'
 
 //address of the machine running the LM api
-export const BACKEND_HOST = process.env.BACKEND_HOST ?? 'http:/138.246.237.14/'
-// export const BACKEND_HOST = process.env.BACKEND_HOST ?? 'http:/localhost:5000/'
+// export const BACKEND_HOST = process.env.BACKEND_HOST ?? 'http:/138.246.237.14/'
+export const BACKEND_HOST = process.env.BACKEND_HOST ?? 'http:/localhost:5000/'
 
 //relevant enpoints of the LM api
 export const IN_CONTEXT_PATH = process.env.IN_CONTEXT_PATH ?? 'api/create-incontext-post'
