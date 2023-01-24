@@ -3,6 +3,8 @@ import {post} from "./httpService";
 import {CommentHistory, Mood, PostMeta} from "../data/models";
 import { InternalError } from "../errors";
 
+const clamp = (min: number, val: number, max: number) => Math.min(Math.max(val, min), max)
+
 export async function createReply(temperature: number, mood:Mood, history: CommentHistory): Promise<string> {    
     return fetch(BACKEND_HOST + IN_CONTEXT_PATH, {
         method: 'POST',
@@ -11,7 +13,7 @@ export async function createReply(temperature: number, mood:Mood, history: Comme
         },
         body: JSON.stringify({
             context: history.history, 
-            temperature, 
+            temperature: clamp(0.1, temperature, 1.0),  // TODO: Clamping should probably be done sooner, this is a temporary solution.
             mood,
         })
     })
