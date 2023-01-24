@@ -3,6 +3,8 @@ import { AlreadyExistsError, NotFoundError } from "../errors";
 import { isDuplicateKeyError, isForeignKeyError, query } from "./common";
 import { User } from "./models";
 
+// The maximum number of users returned by the search user.
+const MAX_USER_RESULT = 50
 
 export async function storeUser(pool: Pool, user: User, secret: string) {
     const sql = `INSERT INTO users(username, secret, icon_id, display_name, bio) VALUES ($1, $2, $3, $4, $5);`
@@ -82,7 +84,7 @@ export async function getUserByUsername(pool: Pool, username: string): Promise<U
 
 export async function getFollowersForUser(pool: Pool, username: string): Promise<User[]> {
     const sql =
-        `SELECT users.username, icon_id, display_name FROM users JOIN followers ON users.username = followers.username WHERE follows_username = $1;`
+        `SELECT users.username, icon_id, display_name, bio FROM users JOIN followers ON users.username = followers.username WHERE follows_username = $1;`
 
     const result = await query(pool, sql, [username])
     return result.rows
@@ -96,4 +98,15 @@ export async function getFollowedUsernames(pool: Pool, username: string): Promis
     const sql = `SELECT follows_username FROM followers WHERE username = $1;`
     const result = await query(pool, sql, [username])
     return result.rows.map(row => row.follows_username)
+}
+
+/**
+ * Get all the users which username or displayName contains the given substring.
+ */
+export async function getUsersLike(pool: Pool, substring: string): Promise<User[]> {
+    const sql =
+        `SELECT username, icon_id, display_name, bio FROM users 
+            WHERE username LIKE %$1% or display_name LIKE %$1% LIMIT $2`
+    const result = await query(pool, sql, [substring, MAX_USER_RESULT])
+    return result.rows
 }

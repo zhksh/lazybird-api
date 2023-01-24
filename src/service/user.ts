@@ -5,8 +5,9 @@ import {BadRequestError, HTTP_INTERNAL_ERROR, HTTP_SUCCESS, UnauthorizedError} f
 import { encodeJWT, Token } from './jwt'
 import { User, UserMeta } from '../data/models'
 import { Maybe } from 'monet'
-import { getFollowersForUser, getSecretByUsername, getUserByUsername, storeUser, updateUserRecord } from '../data/userStorage'
+import { getUsersLike, getFollowersForUser, getSecretByUsername, getUserByUsername, storeUser, updateUserRecord } from '../data/userStorage'
 import {generateSelfDescription} from "./postGeneraton";
+import { pool } from '../api/common'
 
 export async function createUser(pool: Pool, userDetails: User, password: string): Promise<Token> {
     const validationErr = validateUsername(userDetails.username)
@@ -86,6 +87,14 @@ export async function getUser(pool: Pool, username: string): Promise<UserMeta> {
     const userDetails = await getUserByUsername(pool, username)
     const followers = await getFollowersForUser(pool, username)
     return {...userDetails, followers }
+}
+
+export async function searchUsers(pool: Pool, search: string): Promise<User[]> {
+    const users = await getUsersLike(pool, search)
+    
+    // TODO: Sort users best to worst match?
+
+    return users
 }
 
 async function hashPassword(password: string): Promise<string> {
