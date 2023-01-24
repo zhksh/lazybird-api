@@ -5,6 +5,7 @@ import { PaginationParameters, PostMeta, Post, PostFilter, PageToken, AutoReply 
 import {
     deleteLikeRelation,
     getAutoReply,
+    getPost,
     queryPosts,
     storeAutoReply,
     storeComment,
@@ -14,7 +15,7 @@ import {
 import { getFollowedUsernames } from '../data/userStorage'
 import { BadRequestError } from '../errors'
 import { logger } from '../logger'
-import { createInContextPost } from './postGeneraton'
+import { buildHistory, createInContextPost } from './postGeneraton'
 import { publish } from './pubsub'
 
 export async function createPost(
@@ -53,7 +54,8 @@ export async function createComment(pool: Pool, input: {username: string, postId
 
     const autoReply = await getAutoReply(pool, input.postId)
     if (autoReply) {
-        createAutoReply(pool, autoReply)
+        createAutoReply(pool, input.postId, input.username, autoReply)
+            .catch((err) => logger.error("autoresponse failed:", err))
     }
 }
 
@@ -118,14 +120,22 @@ export async function listUserFeed(pool: Pool, username: string, filter:PostFilt
     return listPosts(pool, { usernames: followed }, pagination)
 }
 
-async function createAutoReply(pool: Pool, autoReply: AutoReply) {
-    //const context = [{"source": "me", "msg": post.content}, {"source": "you", "msg" : comment.content}]
-    
-    createInContextPost({temperature: autoReply.temperature, mood: autoReply.mood, context})
-        .then(response => {
-            // createComment(pool, )
-        })
-        .catch(err => logger.error("failed to create auto reply", err))
+async function createAutoReply(pool: Pool, postId: string, toUsername: string, autoReply: AutoReply) {
+    const post = await getPost(pool, postId)
+    if (post.user.username === toUsername) {
+        // Don't reply to own comments.
+        return
+    }
+
+    const history = buildHistory(post, 4)
+    createInContextPost({temperature: autoReply.temperature, mood: autoReply.mood, context: history.history})
+        .then(backendResponse => 
+            createComment(pool, {
+                username: post.user.username, 
+                postId: postId, 
+                content: JSON.parse(backendResponse).response,
+            })
+        )
 }
 
 function encodePageToken(token: PageToken): string {
