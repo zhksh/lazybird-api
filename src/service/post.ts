@@ -127,7 +127,7 @@ async function createAutoReply(pool: Pool, postId: string, toUsername: string, a
         return
     }
 
-    const history = buildHistory(post, 4)
+    const history = buildHistory(post, autoReply.history_length)
     createInContextPost({temperature: autoReply.temperature, mood: autoReply.mood, context: history.history})
         .then(backendResponse => 
             createComment(pool, {
