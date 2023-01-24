@@ -13,7 +13,7 @@ export async function createReply(temperature: number, mood:Mood, history: Comme
         },
         body: JSON.stringify({
             context: history.history, 
-            temperature, 
+            temperature: 0.5, 
             mood,
         })
     })
