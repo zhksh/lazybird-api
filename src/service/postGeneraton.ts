@@ -13,14 +13,14 @@ export async function createReply(temperature: number, mood:Mood, history: Comme
         },
         body: JSON.stringify({
             context: history.history, 
-            temperature: clamp(0.1, temperature, 1.0),  // TODO: Clamping should probably be done sooner, this is a temporary solution.
+            temperature: clamp(0.1, temperature, 1.0),  // TODO: Clamping should probably be done sooner, this is a temporary solution. Is 1 valid?
             mood,
         })
     })
     .then(res => res.json())
     .then(json => {
-        if (json.response) {
-            return json.response
+        if (json.response && typeof json.response == 'string') {
+            return json.response.trim()
         } else if (json.error) {
             throw new Error(json.error)
         } else {
