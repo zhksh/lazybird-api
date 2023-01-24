@@ -1,11 +1,12 @@
 import bcrypt from 'bcrypt'
 import { Pool } from 'pg'
 import { SALT_ROUNDS } from '../env'
-import { BadRequestError, UnauthorizedError } from '../errors'
+import {BadRequestError, HTTP_INTERNAL_ERROR, HTTP_SUCCESS, UnauthorizedError} from '../errors'
 import { encodeJWT, Token } from './jwt'
 import { User, UserMeta } from '../data/models'
 import { Maybe } from 'monet'
 import { getFollowersForUser, getSecretByUsername, getUserByUsername, storeUser, updateUserRecord } from '../data/userStorage'
+import {generateSelfDescription} from "./postGeneraton";
 
 export async function createUser(pool: Pool, userDetails: User, password: string): Promise<Token> {
     const validationErr = validateUsername(userDetails.username)
@@ -16,8 +17,21 @@ export async function createUser(pool: Pool, userDetails: User, password: string
     const hash = await hashPassword(password)
 
     await storeUser(pool, userDetails, hash)
-    
+    storeSelfDescpription(pool, userDetails.username)
+
     return encodeJWT({username: userDetails.username}).toPromise()
+}
+
+
+async function storeSelfDescpription(pool: Pool, userName: string){
+    const selfDescription = generateSelfDescription(
+        {temperature: 0.8, mood: "ironic", ours: "false"})
+    selfDescription.then((backendResonse) => {
+        const data = JSON.parse(backendResonse)
+        updateUser(pool, userName, {selfdesc: data.response})
+    }).catch((err) => {
+        console.log("Creating and storing self description failed:"+ err.toString())
+    })
 }
 
 export async function authenticateUser(pool: Pool, username: string, password: string): Promise<Token> {
@@ -31,7 +45,9 @@ export async function authenticateUser(pool: Pool, username: string, password: s
     throw new UnauthorizedError('incorrect password')
 }
 
-export async function updateUser(pool: Pool, username: string, update: { displayName?: string, iconId?: string, password?: string, bio?: string }) {
+export async function updateUser(pool: Pool, username: string, update:
+    { displayName?: string, iconId?: string, password?: string, selfdesc?: string }
+) {
     const updates = []
 
     if (update.displayName) {
@@ -56,10 +72,10 @@ export async function updateUser(pool: Pool, username: string, update: { display
         })
     }
 
-    if (update.bio) {
+    if (update.selfdesc) {
         updates.push({
             row: 'bio',
-            value: update.bio,
+            value: update.selfdesc,
         })
     }
     

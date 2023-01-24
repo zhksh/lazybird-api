@@ -1,4 +1,4 @@
-import {BACKEND_HOST, AUTOCOMPLETE_PATH, IN_CONTEXT_PATH} from "../env";
+import {BACKEND_HOST, AUTOCOMPLETE_PATH, IN_CONTEXT_PATH, SELF_DESCRIPTION_PATH} from "../env";
 import {post} from "./httpService";
 import {CommentHistory, Mood, PostMeta} from "../data/models";
 import { InternalError } from "../errors";
@@ -41,6 +41,12 @@ export async function createInContextPost(data): Promise<string>{
 
     const url = BACKEND_HOST + IN_CONTEXT_PATH
     return post(url, payload)
+}
+
+export async function generateSelfDescription(data): Promise<string>{
+    const url = BACKEND_HOST + SELF_DESCRIPTION_PATH
+
+    return post(url, data)
 }
 
 export async function complete(data: any): Promise<string>{
