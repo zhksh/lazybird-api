@@ -1,5 +1,5 @@
 import { Pool } from "pg"
-import {HTTP_INTERNAL_ERROR, HTTP_SUCCESS, NotFoundError} from "../errors"
+import { NotFoundError } from "../errors"
 import { isDuplicateKeyError, isForeignKeyError, query } from "./common"
 import { PostMeta, Post, Comment, PageToken } from "./models"
 import {buildHistory, createInContextPost} from "../service/postGeneraton";
@@ -111,6 +111,23 @@ export async function postExists(pool: Pool, postId: string): Promise<boolean> {
     const sql = `SELECT posts.id FROM posts WHERE id = $1;`
     const result = await query(pool, sql, [postId])
     return result.rows.length >= 1
+}
+
+export async function storeAutoReply(pool: Pool, reply: AutoReply) {
+    const sql = `INSERT INTO auto_replies(post_id, mood, temperature, history_length) VALUES ($1, $2, $3, $4);`
+    const values = [reply.post_id, reply.mood, reply.temperature, reply.history_length]
+    await query(pool, sql, values)
+}
+
+export async function getAutoReply(pool: Pool, postId: string): Promise<AutoReply> {
+    const sql = `SELECT post_id, mood, temperature, history_length FROM auto_replies WHERE post_id = $1;`
+
+    const result = await query(pool, sql, [postId])
+    if (result.rowCount < 1) {
+        throw new NotFoundError('no autoreply found')
+    }
+
+    return result.rows[0]
 }
 
 export async function queryPosts(pool: Pool, limit: number, filter?: {page?: PageToken, usernames?: string[]}): Promise<PostMeta[]>{

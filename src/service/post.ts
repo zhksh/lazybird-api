@@ -16,7 +16,7 @@ import { BadRequestError } from '../errors'
 import { logger } from '../logger'
 import { publish } from './pubsub'
 
-export async function createPost(pool: Pool, username: string, content: string, autocomplete: boolean,parameters?: GenerationParameters): Promise<Post> {
+export async function createPost(pool: Pool, username: string, content: string, autocomplete: boolean, parameters?: GenerationParameters): Promise<Post> {
     
     const post: Post = {
         id: v4(),

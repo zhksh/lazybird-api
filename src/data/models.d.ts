@@ -27,6 +27,13 @@ export interface PostMeta extends Post {
     comments: Comment[]
 }
 
+export interface AutoReply {
+    post_id: string
+    mood: string
+    temperature: string
+    history_length: string
+}
+
 export interface Comment {
     id: string
     user: User
