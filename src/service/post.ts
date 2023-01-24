@@ -16,7 +16,7 @@ import {
 import { getFollowedUsernames } from '../data/userStorage'
 import { BadRequestError } from '../errors'
 import { logger } from '../logger'
-import { buildHistory, createInContextPost } from './postGeneraton'
+import { buildHistory, createInContextPost, createReply } from './postGeneraton'
 import { publish } from './pubsub'
 
 const autoReplyEmitter = new EventEmitter()
@@ -130,6 +130,9 @@ autoReplyEmitter.on('createAutoReply', async (pool: Pool, postId: string, toUser
     }
 
     const history = buildHistory(post, autoReply.history_length)
+
+    await createReply(autoReply.temperature, autoReply.mood, history).catch(err => logger.error('fetch err', err))
+
     createInContextPost({temperature: autoReply.temperature, mood: autoReply.mood, context: history.history})
         .then(backendResponse => 
             createComment(pool, {

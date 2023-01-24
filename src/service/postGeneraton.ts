@@ -1,9 +1,22 @@
 import {BACKEND_HOST, AUTOCOMPLETE_PATH, IN_CONTEXT_PATH} from "../env";
 import {post} from "./httpService";
-import Dict = NodeJS.Dict;
-import {CommentHistory, PostMeta} from "../data/models";
+import {CommentHistory, Mood, PostMeta} from "../data/models";
+import { logger } from "../logger";
 
+export async function createReply(temperature: number, mood:Mood, history: CommentHistory) {
+    const url = BACKEND_HOST + IN_CONTEXT_PATH
+    
+    const response = await fetch(url, {
+        method: 'POST',
+        body: JSON.stringify({
+            context: history.history, 
+            temperature, 
+            mood,
+        })
+    })
 
+    response.json().then(json => logger.info(json))
+}
 
 export async function createInContextPost(data): Promise<string>{
     const temperature = data.temperature
