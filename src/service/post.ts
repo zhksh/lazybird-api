@@ -1,3 +1,4 @@
+import EventEmitter from 'events'
 import { Either } from 'monet'
 import { Pool } from 'pg'
 import { v4 } from 'uuid'
@@ -17,6 +18,8 @@ import { BadRequestError } from '../errors'
 import { logger } from '../logger'
 import { buildHistory, createInContextPost } from './postGeneraton'
 import { publish } from './pubsub'
+
+const autoReplyEmitter = new EventEmitter()
 
 export async function createPost(
     pool: Pool, 
@@ -54,8 +57,7 @@ export async function createComment(pool: Pool, input: {username: string, postId
 
     const autoReply = await getAutoReply(pool, input.postId)
     if (autoReply) {
-        await createAutoReply(pool, input.postId, input.username, autoReply)
-            .catch((err) => logger.error("createAutoReply failed:", err))
+        autoReplyEmitter.emit('createAutoReply', pool, input.postId, input.username, autoReply)
     }
 }
 
@@ -120,7 +122,7 @@ export async function listUserFeed(pool: Pool, username: string, filter:PostFilt
     return listPosts(pool, { usernames: followed }, pagination)
 }
 
-async function createAutoReply(pool: Pool, postId: string, toUsername: string, autoReply: AutoReply) {
+autoReplyEmitter.on('createAutoReply', async (pool: Pool, postId: string, toUsername: string, autoReply: AutoReply) => {
     const post = await getPost(pool, postId)
     if (post.user.username === toUsername) {
         // Don't reply to own comments.
@@ -144,7 +146,7 @@ async function createAutoReply(pool: Pool, postId: string, toUsername: string, a
                 content: "I can't react to that right now. Try me later!",
             }).catch(err => logger.error('failed to create comment:', err))
         })
-}
+})
 
 function encodePageToken(token: PageToken): string {
     const str = JSON.stringify(token)
