@@ -190,7 +190,7 @@ function parseUsernames(req: Request): string[] {
 
 function parseMood(input: unknown): Either<BadRequestError, Mood> {
   if (typeof input == 'string') {
-    let lower = input.toLowerCase()
+    const lower = input.toLowerCase()
     if (['neutral', 'happy', 'angry', 'ironic', 'sad'].includes(lower)) {      
       return Right(lower as Mood)
     } 

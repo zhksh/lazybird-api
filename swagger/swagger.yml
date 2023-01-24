@@ -427,6 +427,9 @@ components:
         temperature:
           type: number
           description: The temperature, i.e. craziness of the post.
+        historyLength:
+          type: number
+          description: The length of the history that is used when generating automatic replies.
     ContextPost:
       type: object
       required:
