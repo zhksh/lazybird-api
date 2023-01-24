@@ -1,12 +1,13 @@
 import { Either } from 'monet'
-import fetch from 'node-fetch'
 import { Pool } from 'pg'
 import { v4 } from 'uuid'
-import { GenerationParameters, PaginationParameters, PostMeta, Post, PostFilter, PageToken } from '../data/models'
+import { PaginationParameters, PostMeta, Post, PostFilter, PageToken, AutoReply } from '../data/models'
 import {
     deleteLikeRelation,
-    handleComment,
+    getAutoReply,
+    getPost,
     queryPosts,
+    storeAutoReply,
     storeComment,
     storeLikeRelation,
     storePost
@@ -14,18 +15,29 @@ import {
 import { getFollowedUsernames } from '../data/userStorage'
 import { BadRequestError } from '../errors'
 import { logger } from '../logger'
+import { buildHistory, createInContextPost } from './postGeneraton'
 import { publish } from './pubsub'
 
-export async function createPost(pool: Pool, username: string, content: string, autocomplete: boolean,parameters?: GenerationParameters): Promise<Post> {
-    
+export async function createPost(
+    pool: Pool, 
+    username: string, 
+    content: string, 
+    autoComplete: boolean, 
+    autoReply?: AutoReply
+): Promise<Post> {
+
     const post: Post = {
         id: v4(),
         content: content,
-        auto_complete: autocomplete,
+        auto_complete: autoComplete,
         timestamp: new Date(),
     }
-    
+
     await storePost(pool, post, username)
+    
+    if (autoReply) {
+        await storeAutoReply(pool, post.id, autoReply)
+    }
 
     return post
 }
@@ -36,11 +48,15 @@ export async function createComment(pool: Pool, input: {username: string, postId
         timestamp: new Date(),
         ...input,
     }
-    
-    // await storeComment(pool, comment)
-    await handleComment(pool, comment)
 
+    await storeComment(pool, comment)
     publish(input.postId)
+
+    const autoReply = await getAutoReply(pool, input.postId)
+    if (autoReply) {
+        createAutoReply(pool, input.postId, input.username, autoReply)
+            .catch((err) => logger.error("createAutoReply failed:", err))
+    }
 }
 
 /**
@@ -56,7 +72,12 @@ export async function setPostIsLiked(pool: Pool, input: {username: string, postI
     publish(input.postId)
 }
 
-export async function listPosts(pool: Pool, filter: PostFilter, pagination: PaginationParameters): Promise<{posts: PostMeta[], nextPageToken: string}> {    
+export async function listPosts(
+    pool: Pool, 
+    filter: PostFilter, 
+    pagination: PaginationParameters
+): Promise<{posts: PostMeta[], nextPageToken: string}> {
+
     const query = {
         usernames: filter.usernames,
         page: undefined,
@@ -99,6 +120,24 @@ export async function listUserFeed(pool: Pool, username: string, filter:PostFilt
     return listPosts(pool, { usernames: followed }, pagination)
 }
 
+async function createAutoReply(pool: Pool, postId: string, toUsername: string, autoReply: AutoReply) {
+    const post = await getPost(pool, postId)
+    if (post.user.username === toUsername) {
+        // Don't reply to own comments.
+        return
+    }
+
+    const history = buildHistory(post, autoReply.history_length)
+    createInContextPost({temperature: autoReply.temperature, mood: autoReply.mood, context: history.history})
+        .then(backendResponse => 
+            createComment(pool, {
+                username: post.user.username, 
+                postId: postId, 
+                content: JSON.parse(backendResponse).response,
+            }).catch(err => logger.error('failed to create comment:', err))
+        )
+        .catch(err => logger.error('autoreply failed:', err))
+}
 
 function encodePageToken(token: PageToken): string {
     const str = JSON.stringify(token)
