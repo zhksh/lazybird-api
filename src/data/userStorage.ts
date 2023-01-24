@@ -5,8 +5,8 @@ import { User } from "./models";
 
 
 export async function storeUser(pool: Pool, user: User, secret: string) {
-    const sql = `INSERT INTO users(username, secret, icon_id, display_name) VALUES ($1, $2, $3, $4);`
-    const values = [user.username, secret, user.icon_id, user.display_name]
+    const sql = `INSERT INTO users(username, secret, icon_id, display_name, bio) VALUES ($1, $2, $3, $4, $5);`
+    const values = [user.username, secret, user.icon_id, user.display_name, user.bio]
 
     await query(pool, sql, values)
         .catch(err => {
@@ -70,7 +70,7 @@ export async function getSecretByUsername(pool: Pool, username: string): Promise
 }
 
 export async function getUserByUsername(pool: Pool, username: string): Promise<User> {
-    const sql = `SELECT username, icon_id, display_name FROM users WHERE users.username = $1;`
+    const sql = `SELECT username, icon_id, display_name, bio FROM users WHERE users.username = $1;`
 
     const result = await query(pool, sql, [username])
     if (result.rowCount < 1) {

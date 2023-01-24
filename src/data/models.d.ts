@@ -5,6 +5,7 @@ export interface User {
     username: string
     icon_id: string
     display_name?: string
+    bio?: string
 }
 
 export interface UserMeta {

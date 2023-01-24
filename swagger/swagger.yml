@@ -387,6 +387,9 @@ components:
         displayName:
           type: string
           description: The name that is displayed publically inside the app.
+        bio:
+          type: string
+          description: The bio or description of the user.
     UserMeta:
       type: object
       allOf:
@@ -406,6 +409,8 @@ components:
           type: string
           description: The name that is displayed publically inside the app.
         password:
+          type: string
+        bio:
           type: string
     NewPost:
       type: object
