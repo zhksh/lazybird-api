@@ -136,7 +136,14 @@ async function createAutoReply(pool: Pool, postId: string, toUsername: string, a
                 content: JSON.parse(backendResponse).response,
             }).catch(err => logger.error('failed to create comment:', err))
         )
-        .catch(err => logger.error('autoreply failed:', err))
+        .catch(err => {
+            logger.error('autoreply failed:', err)
+            createComment(pool, {
+                username: post.user.username, 
+                postId: postId, 
+                content: "I can't react to that right now. Try me later!",
+            }).catch(err => logger.error('failed to create comment:', err))
+        })
 }
 
 function encodePageToken(token: PageToken): string {
