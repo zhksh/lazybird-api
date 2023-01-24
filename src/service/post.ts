@@ -131,14 +131,14 @@ autoReplyEmitter.on('createAutoReply', async (pool: Pool, postId: string, toUser
 
     const history = buildHistory(post, autoReply.history_length)
 
-    await createReply(autoReply.temperature, autoReply.mood, history).catch(err => logger.error('fetch err', err))
-
-    createInContextPost({temperature: autoReply.temperature, mood: autoReply.mood, context: history.history})
-        .then(backendResponse => 
+    logger.info('creating auto reply', { ...autoReply })
+    
+    await createReply(autoReply.temperature, autoReply.mood, history)
+        .then(content => 
             createComment(pool, {
                 username: post.user.username, 
-                postId: postId, 
-                content: JSON.parse(backendResponse).response,
+                postId, 
+                content,
             }).catch(err => logger.error('failed to create comment:', err))
         )
         .catch(err => {

@@ -1,12 +1,10 @@
 import {BACKEND_HOST, AUTOCOMPLETE_PATH, IN_CONTEXT_PATH} from "../env";
 import {post} from "./httpService";
 import {CommentHistory, Mood, PostMeta} from "../data/models";
-import { logger } from "../logger";
+import { InternalError } from "../errors";
 
-export async function createReply(temperature: number, mood:Mood, history: CommentHistory) {
-    const url = BACKEND_HOST + IN_CONTEXT_PATH
-    
-    const response = await fetch(url, {
+export async function createReply(temperature: number, mood:Mood, history: CommentHistory): Promise<string> {    
+    return fetch(BACKEND_HOST + IN_CONTEXT_PATH, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -17,8 +15,16 @@ export async function createReply(temperature: number, mood:Mood, history: Comme
             mood,
         })
     })
-
-    response.json().then(json => logger.info(JSON.stringify(json)))
+    .then(res => res.json())
+    .then(json => {
+        if (json.response) {
+            return json.response
+        } else if (json.error) {
+            throw new Error(json.error)
+        } else {
+            throw new InternalError()
+        }
+    })
 }
 
 export async function createInContextPost(data): Promise<string>{
