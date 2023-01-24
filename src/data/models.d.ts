@@ -27,22 +27,18 @@ export interface PostMeta extends Post {
     comments: Comment[]
 }
 
+export type Mood = 'neutral' | 'happy' | 'angry' | 'ironic' | 'sad'
+
 export interface AutoReply {
-    post_id: string
-    mood: string
-    temperature: string
-    history_length: string
+    mood: Mood
+    temperature: number
+    history_length: number
 }
 
 export interface Comment {
     id: string
     user: User
     content: string
-}
-
-export interface GenerationParameters {
-    mood: string
-    temperature: number
 }
 
 export interface PostFilter {

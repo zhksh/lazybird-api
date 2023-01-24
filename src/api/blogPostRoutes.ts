@@ -1,7 +1,7 @@
 import express from 'express'
 import { Request, Response } from 'express'
-import { Either } from 'monet'
-import { GenerationParameters, Post, PostFilter } from '../data/models';
+import { Either, Left, Right } from 'monet'
+import { AutoReply, Mood, Post, PostFilter } from '../data/models';
 import { BadRequestError } from '../errors';
 import { createComment, createPost, listPosts, listUserFeed, setPostIsLiked } from '../service/post';
 import { HTTP_SUCCESS } from '../errors';
@@ -25,15 +25,16 @@ postsRouter.post('/', async (req: Request, res: Response) => {
     return
   }
 
-  parseGenerationParameters(body)
-  .cata(
-    err => sendMappedError(res, err),
-    params => {
-      createPost(pool, body.username, body.content, body.autogenerateAnswers, params)
+  // TODO: shouldAutoComplete never got used. Remove or replace with something like "didAutoComplete", if we want to store that info.
+  const autoComplete = body.shouldAutoComplete ?? false
+
+  parseAutoReply(body)
+    .cata(
+      err => sendMappedError(res, err),
+      autoReply => createPost(pool, body.username, body.content, autoComplete, autoReply)
         .then(post => res.json(post))
         .catch(err => sendMappedError(res, err))
-    }
-  )
+    )
 })
 
 /**
@@ -93,22 +94,33 @@ async function likeHandler(req: Request, res: Response) {
     .catch(err => sendMappedError(res, err))
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function parseGenerationParameters(body: any): Either<BadRequestError, GenerationParameters | undefined> {
-  if (!body.shouldAutoComplete) {
-    return Either.right(undefined)
-  }
- 
-  if (!body.temperature) {
-    return Either.left(new BadRequestError('temperature must not be undefined if shouldAutoComplete == true'))
+function parseAutoReply(body: any): Either<BadRequestError, AutoReply> {
+  if (!body.autogenerateAnswers) {
+    return Right(undefined)
   }
 
-  const params = {
-    temperature: body.temperature, // TODO: Check whether temperature is number?
-    mood: body.mood ?? 'neutral',
-  }
+  if (!body.mood) {
+    body.mood = 'neutral'
+  } 
 
-  return Either.right(params)
+  return parseMood(body.mood)
+    .map(mood => {
+      let temperature = parseFloat(body.temperature)
+      if (isNaN(temperature)) {
+        temperature = 0.5
+      }
+
+      let history_length = parseInt(body.historyLength)
+      if (isNaN(history_length)) {
+        history_length = 4
+      }
+
+      return {
+        mood,
+        temperature,
+        history_length,
+      }
+    })
 }
 
 function parseIsUserFeed(req: Request): boolean {
@@ -174,6 +186,17 @@ function parseUsernames(req: Request): string[] {
   }
 
   return []  
+}
+
+function parseMood(input: unknown): Either<BadRequestError, Mood> {
+  if (typeof input == 'string') {
+    let lower = input.toLowerCase()
+    if (['neutral', 'happy', 'angry', 'ironic', 'sad'].includes(lower)) {      
+      return Right(lower as Mood)
+    } 
+  }
+
+  return Left(new BadRequestError('invalid mood'))  
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

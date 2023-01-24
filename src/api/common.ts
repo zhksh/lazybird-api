@@ -8,7 +8,7 @@ export const pool = new Pool({connectionString})
 export function sendMappedError(res: Response, err: Error, customMsg?: string) {
     res.status(mapStatusCode(err)).send(customMsg ?? err.message)
 }
-  
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapStatusCode(err: any): number {
     if (typeof err.status === 'function') {

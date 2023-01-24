@@ -113,18 +113,18 @@ export async function postExists(pool: Pool, postId: string): Promise<boolean> {
     return result.rows.length >= 1
 }
 
-export async function storeAutoReply(pool: Pool, reply: AutoReply) {
+export async function storeAutoReply(pool: Pool, postId: string, reply: AutoReply) {
     const sql = `INSERT INTO auto_replies(post_id, mood, temperature, history_length) VALUES ($1, $2, $3, $4);`
-    const values = [reply.post_id, reply.mood, reply.temperature, reply.history_length]
+    const values = [postId, reply.mood, reply.temperature, reply.history_length]
     await query(pool, sql, values)
 }
 
-export async function getAutoReply(pool: Pool, postId: string): Promise<AutoReply> {
-    const sql = `SELECT post_id, mood, temperature, history_length FROM auto_replies WHERE post_id = $1;`
+export async function getAutoReply(pool: Pool, postId: string): Promise<AutoReply | undefined> {
+    const sql = `SELECT mood, temperature, history_length FROM auto_replies WHERE post_id = $1;`
 
     const result = await query(pool, sql, [postId])
     if (result.rowCount < 1) {
-        throw new NotFoundError('no autoreply found')
+        return undefined
     }
 
     return result.rows[0]
