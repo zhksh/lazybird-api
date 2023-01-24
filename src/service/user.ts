@@ -31,7 +31,7 @@ export async function authenticateUser(pool: Pool, username: string, password: s
     throw new UnauthorizedError('incorrect password')
 }
 
-export async function updateUser(pool: Pool, username: string, update: { displayName?: string, iconId?: string, password?: string }) {
+export async function updateUser(pool: Pool, username: string, update: { displayName?: string, iconId?: string, password?: string, bio?: string }) {
     const updates = []
 
     if (update.displayName) {
@@ -53,6 +53,13 @@ export async function updateUser(pool: Pool, username: string, update: { display
         updates.push({
             row: 'secret',
             value: hash,
+        })
+    }
+
+    if (update.bio) {
+        updates.push({
+            row: 'bio',
+            value: update.bio,
         })
     }
     

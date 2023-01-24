@@ -34,6 +34,7 @@ authRouter.post('/', async (req: Request, res: Response) => {
     username: body.username, 
     icon_id: body.iconId, 
     display_name: body.displayName,
+    bio: body.bio,
   }
 
   createUser(pool, details, body.password)
