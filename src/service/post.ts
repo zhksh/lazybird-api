@@ -54,7 +54,7 @@ export async function createComment(pool: Pool, input: {username: string, postId
 
     const autoReply = await getAutoReply(pool, input.postId)
     if (autoReply) {
-        createAutoReply(pool, input.postId, input.username, autoReply)
+        await createAutoReply(pool, input.postId, input.username, autoReply)
             .catch((err) => logger.error("createAutoReply failed:", err))
     }
 }
