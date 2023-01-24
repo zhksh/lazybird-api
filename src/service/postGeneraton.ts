@@ -18,7 +18,7 @@ export async function createReply(temperature: number, mood:Mood, history: Comme
         })
     })
 
-    response.json().then(json => logger.info(json))
+    response.json().then(json => logger.info(JSON.stringify(json)))
 }
 
 export async function createInContextPost(data): Promise<string>{
