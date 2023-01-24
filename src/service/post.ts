@@ -48,14 +48,14 @@ export async function createComment(pool: Pool, input: {username: string, postId
         timestamp: new Date(),
         ...input,
     }
-    
+
     await storeComment(pool, comment)
     publish(input.postId)
 
     const autoReply = await getAutoReply(pool, input.postId)
     if (autoReply) {
         createAutoReply(pool, input.postId, input.username, autoReply)
-            .catch((err) => logger.error("autoresponse failed:", err))
+            .catch((err) => logger.error("createAutoReply failed:", err))
     }
 }
 
@@ -134,8 +134,9 @@ async function createAutoReply(pool: Pool, postId: string, toUsername: string, a
                 username: post.user.username, 
                 postId: postId, 
                 content: JSON.parse(backendResponse).response,
-            })
+            }).catch(err => logger.error('failed to create comment:', err))
         )
+        .catch(err => logger.error('autoreply failed:', err))
 }
 
 function encodePageToken(token: PageToken): string {
