@@ -79,7 +79,7 @@ export async function getComments(pool: Pool, postId: string): Promise<Comment[]
     const sql = 
     `SELECT id, users.username, users.icon_id, users.display_name, content, timestamp
         FROM comments JOIN users ON comments.username = users.username 
-        WHERE post_id = $1;
+        WHERE post_id = $1 ORDER BY comments.timestamp ASC;
     `
     const result = await query(pool, sql, [postId])
     return result.rows.map(scanComment)

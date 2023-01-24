@@ -16,7 +16,7 @@ import {
 import { getFollowedUsernames } from '../data/userStorage'
 import { BadRequestError } from '../errors'
 import { logger } from '../logger'
-import { buildHistory, createInContextPost, createReply } from './postGeneraton'
+import { buildHistory, createReply } from './postGeneraton'
 import { publish } from './pubsub'
 
 const autoReplyEmitter = new EventEmitter()
