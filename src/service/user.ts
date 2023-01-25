@@ -5,8 +5,10 @@ import {BadRequestError, HTTP_INTERNAL_ERROR, HTTP_SUCCESS, UnauthorizedError} f
 import { encodeJWT, Token } from './jwt'
 import { User, UserMeta } from '../data/models'
 import { Maybe } from 'monet'
-import { getFollowersForUser, getSecretByUsername, getUserByUsername, storeUser, updateUserRecord } from '../data/userStorage'
+import { getUsersLike, getFollowersForUser, getSecretByUsername, getUserByUsername, storeUser, updateUserRecord } from '../data/userStorage'
 import {generateSelfDescription} from "./postGeneraton";
+
+const MAX_USERNAME_LENGHT = 20
 
 export async function createUser(pool: Pool, userDetails: User, password: string): Promise<Token> {
     const validationErr = validateUsername(userDetails.username)
@@ -49,7 +51,7 @@ export async function updateUser(pool: Pool, username: string, update:
     { displayName?: string, iconId?: string, password?: string, selfdesc?: string }
 ) {
     const updates = []
-
+    
     if (update.displayName) {
         updates.push({
             row: 'display_name',
@@ -88,6 +90,11 @@ export async function getUser(pool: Pool, username: string): Promise<UserMeta> {
     return {...userDetails, followers }
 }
 
+export async function searchUsers(pool: Pool, search: string): Promise<User[]> {
+    const users = await getUsersLike(pool, search)
+    return sortUsersByMatch(users, search)
+}
+
 async function hashPassword(password: string): Promise<string> {
     return bcrypt.hash(password, SALT_ROUNDS)    
 }
@@ -101,7 +108,41 @@ function validateUsername(username: string) : Maybe<BadRequestError> {
         return Maybe.some(new BadRequestError('username must only contain letters and numbers'))
     }
     
-    // TODO: Add length restriction
+    if (username.length > MAX_USERNAME_LENGHT) {
+        return Maybe.some(new BadRequestError(`username cannot be longer than ${MAX_USERNAME_LENGHT} characters`))
+    }
 
     return Maybe.none()
 }
+
+// TODO: Check performance, especially on many search calls
+function sortUsersByMatch(users: User[], match: string): User[] {
+    const scores = users.map((user, i) => {
+        let score = levenshteinDistance(match, user.username)  
+        if (user.display_name) {
+            score = Math.min(score, levenshteinDistance(match, user.display_name))
+        }
+
+        return {i, score}
+    })
+
+    return scores.sort((a, b) => a.score - b.score).map(v => users[v.i])
+}
+
+function levenshteinDistance(a: string, b: string): number {
+    const matrix = Array.from({ length: a.length }).map(() => Array.from({ length: b.length }).map(() => 0))
+  
+    for (let i = 0; i < a.length; i++) matrix[i][0] = i
+  
+    for (let i = 0; i < b.length; i++) matrix[0][i] = i
+  
+    for (let j = 0; j < b.length; j++)
+      for (let i = 0; i < a.length; i++)
+        matrix[i][j] = Math.min(
+          (i == 0 ? 0 : matrix[i - 1][j]) + 1,
+          (j == 0 ? 0 : matrix[i][j - 1]) + 1,
+          (i == 0 || j == 0 ? 0 : matrix[i - 1][j - 1]) + (a[i] == b[j] ? 0 : 1)
+        )
+  
+    return matrix[a.length - 1][b.length - 1]
+  }

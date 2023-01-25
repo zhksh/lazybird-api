@@ -1,6 +1,6 @@
 import express from 'express'
 import { Request, Response } from 'express';
-import { authenticateUser, createUser, getUser, updateUser } from '../service/user'
+import { authenticateUser, createUser, getUser, searchUsers, updateUser } from '../service/user'
 import { pool, sendMappedError } from './common';
 import { BadRequestError, ForbiddenError } from '../errors';
 import { authenticate } from './middleware';
@@ -116,6 +116,20 @@ userRouter.post('/:username/follow', async (req: Request, res: Response) => {
   
   deleteFollowerRelation(pool, username, followsUsername)
     .then(() => res.sendStatus(200))
+    .catch(err => sendMappedError(res, err))
+})
+
+/** 
+ * Search all users for matches with the given search string.
+ */
+userRouter.get('/', async (req: Request, res: Response) => {
+  const search = req.query.search as string
+  if (!search) {
+    sendMappedError(res, new BadRequestError('search parameter must not be empty'))
+  }
+
+  searchUsers(pool, search)
+    .then(users => res.json({ users }))
     .catch(err => sendMappedError(res, err))
 })
 

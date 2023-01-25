@@ -52,6 +52,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+    get:
+      tags:
+        - User
+      summary: Search user
+      description: Search for a user given a search string. Returns all users that contain the given search string in their username or display name. Might return an empty response if no user is found. If too many matches are found, the result might be limited by the server.
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: The search string used to find users.
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:  
+                type: object
+                required:
+                  - users
+                properties:
+                  users:
+                    type: 'array'
+                    items:
+                      $ref: '#/components/schemas/User'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /users/auth:
     post:
       tags:
