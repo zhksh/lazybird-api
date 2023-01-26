@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt'
 import { Pool } from 'pg'
 import { SALT_ROUNDS } from '../env'
-import {BadRequestError, HTTP_INTERNAL_ERROR, HTTP_SUCCESS, UnauthorizedError} from '../errors'
+import {BadRequestError, UnauthorizedError} from '../errors'
 import { encodeJWT, Token } from './jwt'
 import { User, UserMeta } from '../data/models'
 import { Maybe } from 'monet'
@@ -30,7 +30,7 @@ async function storeSelfDescpription(pool: Pool, userName: string){
         {temperature: 0.8, mood: "ironic", ours: "false"})
     selfDescription.then((backendResonse) => {
         const data = JSON.parse(backendResonse)
-        updateUser(pool, userName, {selfdesc: data.response})
+        updateUser(pool, userName, {bio: data.response})
     }).catch((err) => {
         console.log("Creating and storing self description failed:"+ err.toString())
     })
@@ -48,7 +48,7 @@ export async function authenticateUser(pool: Pool, username: string, password: s
 }
 
 export async function updateUser(pool: Pool, username: string, update:
-    { displayName?: string, iconId?: string, password?: string, selfdesc?: string }
+    { displayName?: string, iconId?: string, password?: string, bio?: string }
 ) {
     const updates = []
     
@@ -74,10 +74,10 @@ export async function updateUser(pool: Pool, username: string, update:
         })
     }
 
-    if (update.selfdesc) {
+    if (update.bio) {
         updates.push({
             row: 'bio',
-            value: update.selfdesc,
+            value: update.bio,
         })
     }
     

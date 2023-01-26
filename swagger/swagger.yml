@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   version: 1.0.0
-  title: MSP - Twitter Clone
+  title: MSP - Blog e
   description: ''
 servers:
 - url: http://localhost:6969/
