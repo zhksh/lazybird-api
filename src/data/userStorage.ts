@@ -106,10 +106,8 @@ export async function getFollowedUsernames(pool: Pool, username: string): Promis
 export async function getUsersLike(pool: Pool, substring: string): Promise<User[]> {
     const sql =
         `SELECT username, icon_id, display_name, bio FROM users 
-            WHERE username LIKE $1 or display_name LIKE $1 
+            WHERE username ILIKE $1 or display_name ILIKE $1 
             ORDER BY username ASC LIMIT $2`
-
-    console.log(sql)
 
     const result = await query(pool, sql, [`%${substring}%`, MAX_USER_RESULT])
     return result.rows
