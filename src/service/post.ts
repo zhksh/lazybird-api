@@ -2,7 +2,7 @@ import EventEmitter from 'events'
 import { Either } from 'monet'
 import { Pool } from 'pg'
 import { v4 } from 'uuid'
-import { PaginationParameters, PostMeta, Post, PostFilter, PageToken, AutoReply } from '../data/models'
+import {PaginationParameters, PostMeta, Post, PostFilter, PageToken, AutoReply, PostRequest} from '../data/models'
 import {
     deleteLikeRelation,
     getAutoReply,
@@ -23,23 +23,20 @@ const autoReplyEmitter = new EventEmitter()
 
 export async function createPost(
     pool: Pool, 
-    username: string, 
-    content: string, 
-    autoComplete: boolean, 
-    autoReply?: AutoReply
+    postreq: PostRequest
 ): Promise<Post> {
 
     const post: Post = {
         id: v4(),
-        content: content,
-        auto_complete: autoComplete,
+        content: postreq.content,
+        autoreply: postreq.autoReplyOptions != null,
         timestamp: new Date(),
     }
 
-    await storePost(pool, post, username)
+    await storePost(pool, post, postreq.username)
     
-    if (autoReply) {
-        await storeAutoReply(pool, post.id, autoReply)
+    if (postreq.autoReplyOptions != null) {
+        await storeAutoReply(pool, post.id, postreq.autoReplyOptions)
     }
 
     return post
