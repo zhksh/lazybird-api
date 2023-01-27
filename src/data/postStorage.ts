@@ -155,7 +155,7 @@ function scanPostMeta(row: any, likes: string[], comments: Comment[]): PostMeta 
     return {
         id: row.id,
         content: row.content,
-        autreply: row.auto_complete,
+        autoreply: row.auto_complete ?? false,
         timestamp: row.timestamp,
         user: {
             username: row.username,
