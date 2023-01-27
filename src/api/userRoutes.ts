@@ -5,7 +5,7 @@ import { pool, sendMappedError } from './common';
 import { BadRequestError, ForbiddenError } from '../errors';
 import { authenticate } from './middleware';
 import { Maybe } from 'monet';
-import { deleteFollowerRelation, storeFollowerRelation } from '../data/userStorage';
+import { deleteFollowerRelation, getUsersLike, storeFollowerRelation } from '../data/userStorage';
 
 /**
  * Defines all routes necessary for authorization. 
@@ -128,7 +128,7 @@ userRouter.get('/', async (req: Request, res: Response) => {
     sendMappedError(res, new BadRequestError('search parameter must not be empty'))
   }
 
-  searchUsers(pool, search)
+  getUsersLike(pool, search)
     .then(users => res.json({ users }))
     .catch(err => sendMappedError(res, err))
 })

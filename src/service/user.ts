@@ -91,8 +91,7 @@ export async function getUser(pool: Pool, username: string): Promise<UserMeta> {
 }
 
 export async function searchUsers(pool: Pool, search: string): Promise<User[]> {
-    const users = await getUsersLike(pool, search)
-    return sortUsersByMatch(users, search)
+    return getUsersLike(pool, search)
 }
 
 async function hashPassword(password: string): Promise<string> {
@@ -114,35 +113,3 @@ function validateUsername(username: string) : Maybe<BadRequestError> {
 
     return Maybe.none()
 }
-
-// TODO: Check performance, especially on many search calls
-function sortUsersByMatch(users: User[], match: string): User[] {
-    const scores = users.map((user, i) => {
-        let score = levenshteinDistance(match, user.username)  
-        if (user.display_name) {
-            score = Math.min(score, levenshteinDistance(match, user.display_name))
-        }
-
-        return {i, score}
-    })
-
-    return scores.sort((a, b) => a.score - b.score).map(v => users[v.i])
-}
-
-function levenshteinDistance(a: string, b: string): number {
-    const matrix = Array.from({ length: a.length }).map(() => Array.from({ length: b.length }).map(() => 0))
-  
-    for (let i = 0; i < a.length; i++) matrix[i][0] = i
-  
-    for (let i = 0; i < b.length; i++) matrix[0][i] = i
-  
-    for (let j = 0; j < b.length; j++)
-      for (let i = 0; i < a.length; i++)
-        matrix[i][j] = Math.min(
-          (i == 0 ? 0 : matrix[i - 1][j]) + 1,
-          (j == 0 ? 0 : matrix[i][j - 1]) + 1,
-          (i == 0 || j == 0 ? 0 : matrix[i - 1][j - 1]) + (a[i] == b[j] ? 0 : 1)
-        )
-  
-    return matrix[a.length - 1][b.length - 1]
-  }

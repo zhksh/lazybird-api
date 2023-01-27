@@ -107,7 +107,7 @@ export async function getUsersLike(pool: Pool, substring: string): Promise<User[
     const sql =
         `SELECT username, icon_id, display_name, bio FROM users 
             WHERE username ILIKE $1 or display_name ILIKE $1 
-            ORDER BY username ASC LIMIT $2`
+            ORDER BY LEVENSHTEIN(username, $1) ASC LIMIT $2`
 
     const result = await query(pool, sql, [`%${substring}%`, MAX_USER_RESULT])
     return result.rows

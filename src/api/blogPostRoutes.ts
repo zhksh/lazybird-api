@@ -1,7 +1,7 @@
 import express from 'express'
 import { Request, Response } from 'express'
 import { Either, Left, Right } from 'monet'
-import { AutoReply, Mood, Post, PostFilter } from '../data/models';
+import {AutoReply, Mood, Post, PostFilter, PostRequest} from '../data/models';
 import { BadRequestError } from '../errors';
 import { createComment, createPost, listPosts, listUserFeed, setPostIsLiked } from '../service/post';
 import { HTTP_SUCCESS } from '../errors';
@@ -18,20 +18,10 @@ postsRouter.use(authenticate)
  * Create a new post.
  */
 postsRouter.post('/', async (req: Request, res: Response) => {
-  const body = req.body
-
-  if (!body.content) {
-    sendMappedError(res, new BadRequestError('post content must not be empty'))
-    return
-  }
-
-  // TODO: shouldAutoComplete never got used. Remove or replace with something like "didAutoComplete", if we want to store that info.
-  const autoComplete = body.shouldAutoComplete ?? false
-
-  parseAutoReply(body)
+  parsePostRequest(req.body)
     .cata(
       err => sendMappedError(res, err),
-      autoReply => createPost(pool, body.username, body.content, autoComplete, autoReply)
+      postReq => createPost(pool, postReq)
         .then(post => res.json(post))
         .catch(err => sendMappedError(res, err))
     )
@@ -94,33 +84,18 @@ async function likeHandler(req: Request, res: Response) {
     .catch(err => sendMappedError(res, err))
 }
 
-function parseAutoReply(body: any): Either<BadRequestError, AutoReply> {
-  if (!body.autogenerateAnswers) {
-    return Right(undefined)
+function parsePostRequest(body: any): Either<BadRequestError, PostRequest> {
+  if (!body.post.content || body.post.content == "") {
+    return Left(new BadRequestError('provide content'))
   }
 
-  if (!body.mood) {
-    body.mood = 'neutral'
-  } 
+    const options: AutoReply = body.post.autogenerateResponses ? {
+      mood: body.params.mood,
+      temperature: parseFloat(body.params.temperature),
+      history_length: parseInt(body.params.historyLength)
+  } : null
 
-  return parseMood(body.mood)
-    .map(mood => {
-      let temperature = parseFloat(body.temperature)
-      if (isNaN(temperature)) {
-        temperature = 0.5
-      }
-
-      let history_length = parseInt(body.historyLength)
-      if (isNaN(history_length)) {
-        history_length = 4
-      }
-
-      return {
-        mood,
-        temperature,
-        history_length,
-      }
-    })
+  return Right({content: body.post.content, username: body.username, autoReplyOptions: options})
 }
 
 function parseIsUserFeed(req: Request): boolean {

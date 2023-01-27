@@ -5,7 +5,7 @@ import { PostMeta, Post, Comment, PageToken, AutoReply } from "./models"
 
 export async function storePost(pool: Pool, post: Post, username: string) {
     const sql = `INSERT INTO posts(id, username, content, auto_complete, timestamp) VALUES ($1, $2, $3, $4, $5);`
-    const values = [post.id, username, post.content, post.auto_complete, post.timestamp]
+    const values = [post.id, username, post.content, post.autoreply, post.timestamp]
     await query(pool, sql, values)
 }
 
@@ -155,7 +155,7 @@ function scanPostMeta(row: any, likes: string[], comments: Comment[]): PostMeta 
     return {
         id: row.id,
         content: row.content,
-        auto_complete: row.auto_complete,
+        autoreply: row.auto_complete ?? false,
         timestamp: row.timestamp,
         user: {
             username: row.username,

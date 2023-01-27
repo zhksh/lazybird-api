@@ -12,10 +12,16 @@ export interface UserMeta {
     followers: User[]   // The user array would not scale particularly well in a real application, but should be fine for sake of the practical.
 }
 
+export interface PostRequest {
+    content: string
+    username: string,
+    autoReplyOptions: AutoReply
+}
+
 export interface Post {
     id: string
     content: string
-    auto_complete: AutoReply
+    autoreply: boolean
     timestamp: Date
 }
 
