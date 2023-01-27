@@ -15,7 +15,7 @@ export interface UserMeta {
 export interface Post {
     id: string
     content: string
-    auto_complete: boolean
+    auto_complete: AutoReply
     timestamp: Date
 }
 
