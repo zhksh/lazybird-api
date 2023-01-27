@@ -13,7 +13,8 @@ export async function createReply(temperature: number, mood:Mood, history: Comme
         },
         body: JSON.stringify({
             context: history.history, 
-            temperature: clamp(0.1, temperature, 1.0),  // TODO: Clamping should probably be done sooner, this is a temporary solution. Is 1 valid?
+            temperature: temperature,
+            // temperature: clamp(0.1, temperature, 1.0),  // TODO: Clamping should probably be done sooner, this is a temporary solution. Is 1 valid?
             mood,
         })
     })
