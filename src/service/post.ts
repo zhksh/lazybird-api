@@ -131,12 +131,14 @@ autoReplyEmitter.on('createAutoReply', async (pool: Pool, postId: string, toUser
     logger.info('creating auto reply', { ...autoReply })
     
     await createReply(autoReply, history)
-        .then(content => 
+        .then(content => {
+            const resp: string = JSON.parse(content).response
             createComment(pool, {
                 username: post.user.username, 
                 postId, 
-                content,
+                content: resp,
             }).catch(err => logger.error('failed to create comment:', err))
+        }
         )
         .catch(err => {
             logger.error('autoreply failed:', err)
