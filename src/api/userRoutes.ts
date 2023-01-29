@@ -1,13 +1,11 @@
-import express from 'express'
-import { Request, Response } from 'express';
-import { authenticateUser, createUser, getUser, searchUsers, updateUser } from '../service/user'
-import { pool, sendMappedError } from './common';
-import { BadRequestError, ForbiddenError } from '../errors';
-import { authenticate } from './middleware';
-import { Maybe } from 'monet';
-import { deleteFollowerRelation, getUsersLike, storeFollowerRelation } from '../data/userStorage';
-import {inspect} from "util";
-import defaultOptions = module
+import express, {Request, Response} from 'express'
+import {authenticateUser, createUser, getUser, updateUser} from '../service/user'
+import {pool, sendMappedError} from './common';
+import {BadRequestError, ForbiddenError} from '../errors';
+import {authenticate} from './middleware';
+import {Maybe} from 'monet';
+import {deleteFollowerRelation, getUsersLike, storeFollowerRelation} from '../data/userStorage';
+
 
 /**
  * Defines all routes necessary for authorization. 
