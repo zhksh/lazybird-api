@@ -6,6 +6,8 @@ import { BadRequestError, ForbiddenError } from '../errors';
 import { authenticate } from './middleware';
 import { Maybe } from 'monet';
 import { deleteFollowerRelation, getUsersLike, storeFollowerRelation } from '../data/userStorage';
+import {inspect} from "util";
+import defaultOptions = module
 
 /**
  * Defines all routes necessary for authorization. 
@@ -37,7 +39,7 @@ authRouter.post('/', async (req: Request, res: Response) => {
     bio: body.bio,
   }
 
-  createUser(pool, details, body.password)
+  createUser(pool, details,  body.options, body.password)
   .then(token => {
     res.json(token)
   })

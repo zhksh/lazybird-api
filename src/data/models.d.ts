@@ -40,6 +40,7 @@ export interface AutoReply {
     mood: Mood
     temperature: number
     history_length: number
+    ours: string
 }
 
 export interface Comment {

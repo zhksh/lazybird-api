@@ -92,7 +92,8 @@ function parsePostRequest(body: any): Either<BadRequestError, PostRequest> {
     const options: AutoReply = body.post.autogenerateResponses ? {
       mood: body.params.mood,
       temperature: parseFloat(body.params.temperature),
-      history_length: parseInt(body.params.historyLength)
+      history_length: parseInt(body.params.historyLength),
+      ours: body.params.ours
   } : null
 
   return Right({content: body.post.content, username: body.username, autoReplyOptions: options})

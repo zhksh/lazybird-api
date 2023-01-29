@@ -10,7 +10,9 @@ import {generateSelfDescription} from "./postGeneraton";
 
 const MAX_USERNAME_LENGHT = 20
 
-export async function createUser(pool: Pool, userDetails: User, password: string): Promise<Token> {
+export async function createUser(pool: Pool, userDetails: User,
+                                 options =  {temperature: 1.4, mood: "ironic", ours: "false"},
+                                 password: string): Promise<Token> {
     const validationErr = validateUsername(userDetails.username)
     if (validationErr.isSome()) {
         throw validationErr.some()
@@ -19,15 +21,14 @@ export async function createUser(pool: Pool, userDetails: User, password: string
     const hash = await hashPassword(password)
 
     await storeUser(pool, userDetails, hash)
-    storeSelfDescpription(pool, userDetails.username)
+    storeSelfDescpription(pool, options, userDetails.username)
 
     return encodeJWT({username: userDetails.username}).toPromise()
 }
 
 
-async function storeSelfDescpription(pool: Pool, userName: string){
-    const selfDescription = generateSelfDescription(
-        {temperature: 0.8, mood: "ironic", ours: "false"})
+async function storeSelfDescpription(pool: Pool, options: {temperature: number , mood: string, ours: string}, userName: string){
+    const selfDescription = generateSelfDescription(options)
     selfDescription.then((backendResonse) => {
         const data = JSON.parse(backendResonse)
         updateUser(pool, userName, {bio: data.response})

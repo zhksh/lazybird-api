@@ -1,21 +1,19 @@
 import {BACKEND_HOST, AUTOCOMPLETE_PATH, IN_CONTEXT_PATH, SELF_DESCRIPTION_PATH} from "../env";
 import {post} from "./httpService";
-import {CommentHistory, Mood, PostMeta} from "../data/models";
+import {AutoReply, CommentHistory, Mood, PostMeta} from "../data/models";
 import { InternalError } from "../errors";
 
-const clamp = (min: number, val: number, max: number) => Math.min(Math.max(val, min), max)
-
-export async function createReply(temperature: number, mood:Mood, history: CommentHistory): Promise<string> {    
+export async function createReply(options: AutoReply, history: CommentHistory): Promise<string> {
     return fetch(BACKEND_HOST + IN_CONTEXT_PATH, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            context: history.history, 
-            temperature: temperature,
-            // temperature: clamp(0.1, temperature, 1.0),  // TODO: Clamping should probably be done sooner, this is a temporary solution. Is 1 valid?
-            mood,
+            context: history.history,
+            temperature: options.temperature,
+            mood: options.mood,
+            ours: options.ours || "false"
         })
     })
     .then(res => res.json())
@@ -30,19 +28,20 @@ export async function createReply(temperature: number, mood:Mood, history: Comme
     })
 }
 
-export async function createInContextPost(data): Promise<string>{
-    const temperature = data.temperature
-    const mood = data.mood
-    const context = data.context
-    const payload = JSON.parse(JSON.stringify({
-        "context": context,
-        "temperature": temperature,
-        "mood": mood
-    }));
-
-    const url = BACKEND_HOST + IN_CONTEXT_PATH
-    return post(url, payload)
-}
+// export async function createInContextPost(data): Promise<string>{
+//     const temperature = data.temperature
+//     const mood = data.mood
+//     const context = data.context
+//     const payload = JSON.parse(JSON.stringify({
+//         "context": context,
+//         "temperature": temperature,
+//         "mood": data.mood,
+//         "ours": data.ours
+//     }));
+//
+//     const url = BACKEND_HOST + IN_CONTEXT_PATH
+//     return post(url, payload)
+// }
 
 export async function generateSelfDescription(data): Promise<string>{
     const url = BACKEND_HOST + SELF_DESCRIPTION_PATH

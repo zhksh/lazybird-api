@@ -92,13 +92,13 @@ export async function postExists(pool: Pool, postId: string): Promise<boolean> {
 }
 
 export async function storeAutoReply(pool: Pool, postId: string, reply: AutoReply) {
-    const sql = `INSERT INTO auto_replies(post_id, mood, temperature, history_length) VALUES ($1, $2, $3, $4);`
-    const values = [postId, reply.mood, reply.temperature, reply.history_length]
+    const sql = `INSERT INTO auto_replies(post_id, mood, temperature, history_length, ours) VALUES ($1, $2, $3, $4, $5);`
+    const values = [postId, reply.mood, reply.temperature, reply.history_length, reply.ours]
     await query(pool, sql, values)
 }
 
 export async function getAutoReply(pool: Pool, postId: string): Promise<AutoReply | undefined> {
-    const sql = `SELECT mood, temperature, history_length FROM auto_replies WHERE post_id = $1;`
+    const sql = `SELECT mood, temperature, history_length, ours FROM auto_replies WHERE post_id = $1;`
 
     const result = await query(pool, sql, [postId])
     if (result.rowCount < 1) {
