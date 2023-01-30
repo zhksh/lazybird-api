@@ -1,4 +1,4 @@
-import * as http from "http";
+import * as http from "https";
 import {TIMEOUT} from "../env";
 
 export async function post(url, data): Promise<string> {

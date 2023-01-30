@@ -27,7 +27,7 @@ export async function complete(data: any): Promise<string>{
     return post(url, data)
 }
 
-export function buildHistory(post: PostMeta, n: number) : CommentHistory  {
+export function buildHistory(post: PostMeta, limit: number) : CommentHistory  {
     const hist = {original : post.content, history: []}
     const comments = post.comments
     let i = comments.length
@@ -40,7 +40,7 @@ export function buildHistory(post: PostMeta, n: number) : CommentHistory  {
         const source = comments[i].user.username == post.user.username ? "me" : "you"
         hist.history.push({"source": source, "msg": comments[i].content})
 
-    } while (i > comments.length -n || comments[i].user.username != post.user.username)
+    } while (i > comments.length - limit || comments[i].user.username != post.user.username)
     hist.history.reverse()
 
     return hist
