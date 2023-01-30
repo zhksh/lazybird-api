@@ -2,47 +2,47 @@
 This API is written in Node.js using express.
 
 ## Run
-### Option 1: Run npm project locally
-Running the server locally requires an installation of [Node.js](https://nodejs.dev/en/). 
-First, install all dependencies using:
-```shell
-npm i
-```
-
-Then run the server using:
-```
-npm run dev
-```
-
-Running the project locally requires a postgres database running on port `5432` with the migration setup (`npm run migrate up`).
-
-### Option 2: Run project using docker-compose
-Requires installation of [Docker](https://docs.docker.com/). 
-Simply run the following command to build and run the Node server and all dependencies:
+### Easy option (requires installation of [Docker](https://docs.docker.com/) and [npm](https://www.npmjs.com/)):
+1. Start all required docker containers
 ```shell
 npm run start
 ```
-This includes a postgres database instance. However, `npm run migrate up` still needs to be executed on an empty database.
-
-### Database migrations
-A [migration tool](https://salsita.github.io/node-pg-migrate/#/) is used to setup the postgres database.
-Migrations are defined in the `migrations/` directory.
-
-To run the migrations on the running docker containers just use
+2. On first startup, apply database migrations 
 ```shell
 bash migrate.sh
 ```
-
-Migrations can also be executed through npm using:
+3. Shutdown using
 ```shell
-npm run migrate up
+npm run down
 ```
 
+### Docker only (requires installation of [Docker](https://docs.docker.com/)):
+1. Start all required docker containers
+```shell
+docker compose --env-file ./dev.env build
+docker compose --env-file ./dev.env up -d
+```
+2. On first startup, apply database migrations 
+```shell
+bash migrate.sh
+```
+3. Shutdown using 
+```shell
+docker compose --env-file ./dev.env down
+```
+
+### Run API without docker (requires installation of [npm](https://www.npmjs.com/) & [node](https://nodejs.org/en/))
+```shell
+npm run dev
+```
+Requires a Postgres instance on port 5432
+
 ## API Documentation
-The API Documentation can be hosted to `localhost:8080` by running 
+The API Documentation can be hosted to `localhost:8080` by running
 ```shell
 npm run apiDoc
 ```
+If still online, the doc can also be viewed [here](https://mvsp-api.ncmg.eu/doc)
 
 ## File structure
 ```
@@ -58,10 +58,11 @@ api
         │   ...
     └─── /data                      # Data access layer
         │   ...
-    └─── /subscribers               # async event handlers
-        │   ...
+└─── /swagger
+    │   swagger.yml                 # API definition in openAPI spec
 │   .dockerignore
-│   .env                            # Environment variables
+│   .env                            # Production environment variables
+│   dev.env                         # Development environment variables
 │   .eslintrc.json
 │   docker-compose.yml
 │   Dockerfile
@@ -69,6 +70,7 @@ api
 │   package.json
 │   tsconfig.json
 │   README.md
+|   migrage.sh                      # Script for applying database migrations
 ```
 
 ## Error handling

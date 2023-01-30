@@ -300,19 +300,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /posts/{id}/watch:
+  /posts/:
     get:
       tags:
         - Blog Post
       summary: (WS) Watch post
-      description: Start watching the specified post. Establishes a Websocket connection that is called whenever information associated with the post is updated.
+      description: Calling any websocket endpoint can be used to watch posts. Once the connection is established, a subscribe event with a given PostId is expected. Once subscribed, the updated post information is sent whenever a new comment or like is added. 
       responses:
         '200':
           description: ok
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Post'  # TODO: We might want to change this and only send diff or events.
+                $ref: '#/components/schemas/PostMeta'
         default:
           description: unexpected error
           content:
