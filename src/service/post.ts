@@ -2,18 +2,9 @@ import EventEmitter from 'events'
 import { Either } from 'monet'
 import { Pool } from 'pg'
 import { v4 } from 'uuid'
-import {PaginationParameters, PostMeta, Post, PostFilter, PageToken, AutoReply, PostRequest} from '../data/models'
-import {
-    deleteLikeRelation,
-    getAutoReply,
-    getPost,
-    queryPosts,
-    storeAutoReply,
-    storeComment,
-    storeLikeRelation,
-    storePost
-} from '../data/postStorage'
-import { getFollowedUsernames } from '../data/userStorage'
+import {PaginationParameters, PostMeta, Post, PostFilter, PageToken, AutoReply, PostRequest, User} from '../data/models'
+import { PostStorage } from '../data/postStorage'
+import { UserStorage } from '../data/userStorage'
 import { BadRequestError } from '../errors'
 import { logger } from '../logger'
 import { buildHistory, createReply } from './postGeneraton'
@@ -22,7 +13,7 @@ import { publish } from './pubsub'
 const autoReplyEmitter = new EventEmitter()
 
 export async function createPost(
-    pool: Pool, 
+    postStorage: PostStorage, 
     postreq: PostRequest
 ): Promise<Post> {
 
@@ -33,46 +24,46 @@ export async function createPost(
         timestamp: new Date(),
     }
 
-    await storePost(pool, post, postreq.username)
+    await postStorage.storePost(post, postreq.username)
     
     if (postreq.autoReplyOptions != null) {
-        await storeAutoReply(pool, post.id, postreq.autoReplyOptions)
+        await postStorage.storeAutoReply(post.id, postreq.autoReplyOptions)
     }
 
     return post
 }
 
-export async function createComment(pool: Pool, input: {username: string, postId: string, content: string}) {
+export async function createComment(postStorage: PostStorage, input: {username: string, postId: string, content: string}) {
     const comment = {
         id: v4(),
         timestamp: new Date(),
         ...input,
     }
 
-    await storeComment(pool, comment)
+    await postStorage.storeComment(comment)
     publish(input.postId)
 
-    const autoReply = await getAutoReply(pool, input.postId)
+    const autoReply = await postStorage.getAutoReply(input.postId)
     if (autoReply) {
-        autoReplyEmitter.emit('createAutoReply', pool, input.postId, input.username, autoReply)
+        autoReplyEmitter.emit('createAutoReply', postStorage, input.postId, input.username, autoReply)
     }
 }
 
 /**
  * Either add or remove a like by the given user on the given post.
  */
-export async function setPostIsLiked(pool: Pool, input: {username: string, postId: string, isLiked: boolean}) {
+export async function setPostIsLiked(postStorage: PostStorage, input: {username: string, postId: string, isLiked: boolean}) {
     if (input.isLiked) {
-        await storeLikeRelation(pool, input.username, input.postId)
+        await postStorage.storeLikeRelation(input.username, input.postId)
     } else {
-        await deleteLikeRelation(pool, input.username, input.postId)
+        await postStorage.deleteLikeRelation(input.username, input.postId)
     }
 
     publish(input.postId)
 }
 
 export async function listPosts(
-    pool: Pool, 
+    postStorage: PostStorage, 
     filter: PostFilter, 
     pagination: PaginationParameters
 ): Promise<{posts: PostMeta[], nextPageToken: string}> {
@@ -90,7 +81,7 @@ export async function listPosts(
         )
     }
 
-    const posts = await queryPosts(pool, pagination.size + 1, query)
+    const posts = await postStorage.queryPosts(pagination.size + 1, query)
 
     let nextPageToken = ""
     if (posts.length > pagination.size) {
@@ -108,19 +99,26 @@ export async function listPosts(
     }
 }
 
-export async function listUserFeed(pool: Pool, username: string, filter:PostFilter, pagination: PaginationParameters): Promise<{posts: PostMeta[], nextPageToken: string}> {
-    let followed = await getFollowedUsernames(pool, username)
+export async function listUserFeed(
+    userStorage: UserStorage, 
+    postStorage: PostStorage, 
+    username: string, 
+    filter:PostFilter, 
+    pagination: PaginationParameters
+): Promise<{posts: PostMeta[], nextPageToken: string}> {
+
+    let followed = await userStorage.getFollowedUsernames(username)
     followed.push(username)
 
     if (filter.usernames && filter.usernames.length > 0) {
         followed = followed.filter(username => filter.usernames.includes(username))
     }
 
-    return listPosts(pool, { usernames: followed }, pagination)
+    return listPosts(postStorage, { usernames: followed }, pagination)
 }
 
-autoReplyEmitter.on('createAutoReply', async (pool: Pool, postId: string, toUsername: string, autoReply: AutoReply) => {
-    const post = await getPost(pool, postId)
+autoReplyEmitter.on('createAutoReply', async (postStorage: PostStorage, postId: string, toUsername: string, autoReply: AutoReply) => {
+    const post = await postStorage.getPost(postId)
     if (post.user.username === toUsername) {
         // Don't reply to own comments.
         return
@@ -133,7 +131,7 @@ autoReplyEmitter.on('createAutoReply', async (pool: Pool, postId: string, toUser
     await createReply(autoReply, history)
         .then(content => {
             const resp: string = JSON.parse(content).response
-            createComment(pool, {
+            createComment(postStorage, {
                 username: post.user.username, 
                 postId, 
                 content: resp,
@@ -142,7 +140,7 @@ autoReplyEmitter.on('createAutoReply', async (pool: Pool, postId: string, toUser
         )
         .catch(err => {
             logger.error('autoreply failed:', err)
-            createComment(pool, {
+            createComment(postStorage, {
                 username: post.user.username, 
                 postId: postId, 
                 content: "I can't react to that right now. Try me later!",

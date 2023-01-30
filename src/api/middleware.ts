@@ -1,8 +1,7 @@
 import { Request, Response, NextFunction } from "express"
 import { decodeJWT } from '../service/jwt'
 import { Either } from "monet"
-import { BadRequestError, UnauthorizedError } from "../errors"
-import { sendMappedError } from "./common"
+import { BadRequestError, sendMappedError, UnauthorizedError } from "../errors"
 import { logger } from "../logger"
 
 export const logRequest = (req: Request, res: Response, next: NextFunction) => {        

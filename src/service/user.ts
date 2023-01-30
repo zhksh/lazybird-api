@@ -9,9 +9,13 @@ import { generateSelfDescription } from "./postGeneraton";
 
 const MAX_USERNAME_LENGHT = 20
 
-export async function createUser(userStorage: UserStorage, userDetails: User,
-                                 options =  {temperature: 1.4, mood: "ironic", ours: "false"},
-                                 password: string): Promise<Token> {
+export async function createUser(
+    userStorage: UserStorage, 
+    userDetails: User,
+    options =  {temperature: 1.4, mood: "ironic", ours: "false"},
+    password: string
+): Promise<Token> {
+    
     const validationErr = validateUsername(userDetails.username)
     if (validationErr.isSome()) {
         throw validationErr.some()

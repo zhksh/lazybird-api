@@ -1,12 +1,9 @@
 import express, {Request, Response} from 'express'
 import {authenticateUser, createUser, getUser, updateUser} from '../service/user'
-import {pool, sendMappedError} from './common';
-import {BadRequestError, ForbiddenError} from '../errors';
+import {BadRequestError, ForbiddenError, sendMappedError} from '../errors';
 import {authenticate} from './middleware';
 import {Maybe} from 'monet';
-import {PostgresUserStorage, UserStorage} from '../data/userStorage';
-
-const userStorage: UserStorage = new PostgresUserStorage(pool)
+import { userStorage } from './dependencies';
 
 /**
  * Defines all routes necessary for authorization. 

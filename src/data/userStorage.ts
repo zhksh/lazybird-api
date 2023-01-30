@@ -18,7 +18,7 @@ export interface UserStorage {
     getUsersLike(substring: string): Promise<User[]>
 }
 
-export class PostgresUserStorage {
+export class PostgresUserStorage implements UserStorage {
     private pool: Pool
 
     constructor(pool: Pool) {

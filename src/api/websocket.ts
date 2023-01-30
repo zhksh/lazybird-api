@@ -1,9 +1,8 @@
 import * as WebSocket from 'ws'
-import { getPost, postExists } from '../data/postStorage'
 import { InputEvent, OutputEvent } from '../data/models';
 import { subscribe, Subscription, unsubscribe } from '../service/pubsub'
-import { pool } from './common';
 import { HTTP_BAD_REQUEST, HTTP_INTERNAL_ERROR, HTTP_NOT_FOUND } from '../errors';
+import { postStorage } from './dependencies';
 
 export const wss = new WebSocket.Server({ noServer: true })
 
@@ -36,7 +35,7 @@ async function handleEvent(event: InputEvent, socket: WebSocket.WebSocket, subsc
     if (event.eventType === 'subscribe') {
         console.log('subscribing to post', event.postId)
 
-        if (!postExists(pool, event.postId)) {
+        if (!postStorage.postExists(event.postId)) {
             socket.send(JSON.stringify(makeErrorEvent(HTTP_NOT_FOUND, 'post not found')))
             return
         }
@@ -60,7 +59,7 @@ async function handleEvent(event: InputEvent, socket: WebSocket.WebSocket, subsc
 
 async function sendPost(socket: WebSocket.WebSocket, postId: string) {
     try {
-        const post = await getPost(pool, postId)
+        const post = await postStorage.getPost(postId)
         const output: OutputEvent = {
             eventType: 'updated',
             data: {...post},

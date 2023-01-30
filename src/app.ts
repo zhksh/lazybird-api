@@ -4,9 +4,9 @@ import { authRouter, userRouter } from './api/userRoutes'
 import { backendRouter } from './api/backendRoutes'
 import { postsRouter } from './api/blogPostRoutes'
 import { PORT } from './env'
-import { pool } from './api/common'
 import { wss } from './api/websocket'
 import { logRequest } from './api/middleware'
+import { closePostgresPool } from './api/dependencies'
 
 const app = express()
 
@@ -33,6 +33,6 @@ server.on('upgrade', (request, socket, head) => {
 
 process.on('SIGTERM', () => {
     server.close(() => {
-        pool.end()
+        closePostgresPool()
     })
 })

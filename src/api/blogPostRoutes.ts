@@ -2,11 +2,11 @@ import express from 'express'
 import { Request, Response } from 'express'
 import { Either, Left, Right } from 'monet'
 import {AutoReply, Mood, Post, PostFilter, PostRequest} from '../data/models';
-import { BadRequestError } from '../errors';
+import { BadRequestError, sendMappedError } from '../errors';
 import { createComment, createPost, listPosts, listUserFeed, setPostIsLiked } from '../service/post';
 import { HTTP_SUCCESS } from '../errors';
-import { pool, sendMappedError } from './common';
 import { authenticate } from './middleware';
+import { postStorage, userStorage } from './dependencies';
 
 /**
  * Defines all posts/ routes. Requires all requests to be authenticated.
@@ -21,7 +21,7 @@ postsRouter.post('/', async (req: Request, res: Response) => {
   parsePostRequest(req.body)
     .cata(
       err => sendMappedError(res, err),
-      postReq => createPost(pool, postReq)
+      postReq => createPost(postStorage, postReq)
         .then(post => res.json(post))
         .catch(err => sendMappedError(res, err))
     )
@@ -40,9 +40,9 @@ postsRouter.get('/', async (req: Request, res: Response) => {
 
   let result: Promise<{ posts: Post[], nextPageToken: string }>
   if (isUserFeed) {
-    result = listUserFeed(pool, req.body.username, filter, pagination)
+    result = listUserFeed(userStorage, postStorage, req.body.username, filter, pagination)
   } else {
-    result = listPosts(pool, filter, pagination)
+    result = listPosts(postStorage, filter, pagination)
   }
 
   result
@@ -59,7 +59,7 @@ postsRouter.post('/:id/comments', async (req: Request, res: Response) => {
     return
   }
   
-  createComment(pool, {
+  createComment(postStorage, {
     postId: req.params.id,
     username: req.body.username,
     content: req.body.content,
@@ -79,7 +79,7 @@ async function likeHandler(req: Request, res: Response) {
   const postId = req.params.id
   const isLiked = req.method === 'POST'
   
-  setPostIsLiked(pool, {username, postId, isLiked})
+  setPostIsLiked(postStorage, {username, postId, isLiked})
     .then(() => res.sendStatus(HTTP_SUCCESS))
     .catch(err => sendMappedError(res, err))
 }

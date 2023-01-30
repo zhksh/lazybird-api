@@ -1,3 +1,9 @@
+import { Response } from "express"
+
+export function sendMappedError(res: Response, err: Error, customMsg?: string) {
+    res.status(mapStatusCode(err)).send(customMsg ?? err.message)
+}
+
 export class AlreadyExistsError extends Error {
     constructor(msg?: string) {
        super(['the given resource already exists:', msg].join(' ')) 
@@ -71,3 +77,12 @@ export const HTTP_ALREADY_EXISTS = 409
 export const HTTP_FORBIDDEN = 403
 export const HTTP_NOT_FOUND = 404
 export const HTTP_INTERNAL_ERROR = 500
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapStatusCode(err: any): number {
+    if (typeof err.status === 'function') {
+        return err.status()
+    }
+
+    return HTTP_INTERNAL_ERROR
+}

@@ -1,12 +1,14 @@
 import { assert } from 'chai'
 import 'mocha'
 import { Pool } from 'pg'
-import { PostMeta, User } from './models';
-import { getFollowedUsernames, storeFollowerRelation, storeUser } from './userStorage'
-import { queryPosts, storePost } from './postStorage'
+import { PostMeta, User } from './models'
+import { PostgresPostStorage, PostStorage } from './postStorage'
+import { PostgresUserStorage, UserStorage } from './userStorage'
 import migrate from 'node-pg-migrate'
 
 let pool: Pool
+let postStorage: PostStorage
+let userStorage: UserStorage
 let databaseName: string
 
 before(() => createTestingDatabase().then(writeTestData).catch(e => assert.fail(e)))
@@ -16,7 +18,7 @@ after(() => teardownTestingDatabase().catch(err => console.error('failed to tear
 describe('queryPosts', function() {
   it('query all posts works as expected', async function() {
     try {
-      const got = await queryPosts(pool, 4)
+      const got = await postStorage.queryPosts(4)
       assert.deepEqual(got, samplePosts)
     } catch(e) {
       assert.fail(e)
@@ -28,7 +30,7 @@ describe('queryPosts', function() {
         date: samplePosts[2].timestamp,
         id: samplePosts[2].id,
       }
-      const got = await queryPosts(pool, 2, { page })
+      const got = await postStorage.queryPosts(2, { page })
       const want = [samplePosts[2], samplePosts[3]]
       assert.deepEqual(got, want)
     } catch(e) {
@@ -41,7 +43,7 @@ describe('queryPosts', function() {
         date: samplePosts[1].timestamp,
         id: samplePosts[1].id,
       }
-      const got = await queryPosts(pool, 2, { page })
+      const got = await postStorage.queryPosts(2, { page })
       const want = [samplePosts[1], samplePosts[2]]
       assert.deepEqual(got, want)
     } catch(e) {
@@ -50,7 +52,7 @@ describe('queryPosts', function() {
   });
   it('user filter works as expected', async function() {
     try {
-      const got = await queryPosts(pool, 2, { usernames: [sampleUser1.username] })      
+      const got = await postStorage.queryPosts(2, { usernames: [sampleUser1.username] })      
       const want = [samplePosts[0], samplePosts[2]]
       assert.deepEqual(got, want)
     } catch(e) {
@@ -63,7 +65,7 @@ describe('queryPosts', function() {
         date: samplePosts[2].timestamp,
         id: samplePosts[2].id,
       }
-      const got = await queryPosts(pool, 2, { page, usernames: [sampleUser1.username] })      
+      const got = await postStorage.queryPosts(2, { page, usernames: [sampleUser1.username] })      
       const want = [samplePosts[2]]
       assert.deepEqual(got, want)
     } catch(e) {
@@ -71,28 +73,6 @@ describe('queryPosts', function() {
     }
   });
 });
-
-describe('getFollowedUsernames', function() {
-  it('happy path', async function() {
-    try {
-      const got = await getFollowedUsernames(pool, sampleUser1.username)
-      const want = [sampleUser2.username]
-      assert.deepEqual(got, want)
-    } catch(e) {
-      assert.fail(e)
-    }
-  });
-  it('empty response', async function() {
-    try {
-      const got = await getFollowedUsernames(pool, sampleUser2.username)
-      const want = []
-      assert.deepEqual(got, want)
-    } catch(e) {
-      assert.fail(e)
-    }
-  });
-});
-
 
 const sampleUser1: User = {  
   icon_id: '1',
@@ -109,50 +89,50 @@ const sampleUser2: User = {
 const samplePosts: PostMeta[] = [
   {
     id: 'A',
-    auto_complete: false,
+    autoreply: false,
     content: 'Seife, Seife, was ist Seife?',
     timestamp: new Date(Date.UTC(2022, 11, 4)),
     comments: [],
-    likes: 0,
+    likes: [],
     user: sampleUser1,
   },
   {
     id: 'C',
-    auto_complete: true,
+    autoreply: true,
     content: 'Das Ablecken von Türknöpfen ist auf anderen Planeten illegal.',
     timestamp: new Date(Date.UTC(2022, 11, 4)),
     comments: [],
-    likes: 0,
+    likes: [],
     user: sampleUser2,
     
   },
   {
     id: 'D',
-    auto_complete: false,
+    autoreply: false,
     content: 'Nein, hier ist Patrick.',
     timestamp: new Date(Date.UTC(2022, 11, 4)),
     comments: [],
-    likes: 0,
+    likes: [],
     user: sampleUser1,
   },
   {
     id: 'B',
-    auto_complete: false,
+    autoreply: false,
     content: 'Meine geistig moralischen Mechanismen sind mysteriös und komplex.',
     timestamp: new Date(Date.UTC(2022, 11, 1)),
     comments: [],
-    likes: 0,
+    likes: [],
     user: sampleUser2,
   },
 ]
 
 async function writeTestData() {
   try {
-    await storeUser(pool, sampleUser1, 'secret')
-    await storeUser(pool, sampleUser2, 'secret')
-    await storeFollowerRelation(pool, sampleUser1.username, sampleUser2.username)
+    await userStorage.storeUser(sampleUser1, 'secret')
+    await userStorage.storeUser(sampleUser2, 'secret')
+    await userStorage.storeFollowerRelation(sampleUser1.username, sampleUser2.username)
     samplePosts.forEach(async (post) => {
-      await storePost(pool, post, post.user.username)
+      await postStorage.storePost(post, post.user.username)
     })
   } catch(e) {
     assert.fail(e)
@@ -180,6 +160,8 @@ async function createTestingDatabase() {
   })
 
   pool = new Pool(config)
+  userStorage = new PostgresUserStorage(pool)
+  postStorage = new PostgresPostStorage(pool)
 
   // Wait until database is ready
   await new Promise(resolve => setTimeout(resolve, 10))
