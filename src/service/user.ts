@@ -1,16 +1,15 @@
 import bcrypt from 'bcrypt'
-import { Pool } from 'pg'
 import { SALT_ROUNDS } from '../env'
 import {BadRequestError, UnauthorizedError} from '../errors'
 import { encodeJWT, Token } from './jwt'
 import { User, UserMeta } from '../data/models'
 import { Maybe } from 'monet'
-import { getUsersLike, getFollowersForUser, getSecretByUsername, getUserByUsername, storeUser, updateUserRecord } from '../data/userStorage'
-import {generateSelfDescription} from "./postGeneraton";
+import { UserStorage } from '../data/userStorage'
+import { generateSelfDescription } from "./postGeneraton";
 
 const MAX_USERNAME_LENGHT = 20
 
-export async function createUser(pool: Pool, userDetails: User,
+export async function createUser(userStorage: UserStorage, userDetails: User,
                                  options =  {temperature: 1.4, mood: "ironic", ours: "false"},
                                  password: string): Promise<Token> {
     const validationErr = validateUsername(userDetails.username)
@@ -20,25 +19,25 @@ export async function createUser(pool: Pool, userDetails: User,
 
     const hash = await hashPassword(password)
 
-    await storeUser(pool, userDetails, hash)
-    storeSelfDescpription(pool, options, userDetails.username)
+    await userStorage.storeUser(userDetails, hash)
+    storeSelfDescpription(userStorage, options, userDetails.username)
 
     return encodeJWT({username: userDetails.username}).toPromise()
 }
 
 
-async function storeSelfDescpription(pool: Pool, options: {temperature: number , mood: string, ours: string}, userName: string){
+async function storeSelfDescpription(userStorage: UserStorage, options: {temperature: number , mood: string, ours: string}, userName: string){
     const selfDescription = generateSelfDescription(options)
     selfDescription.then((backendResonse) => {
         const data = JSON.parse(backendResonse)
-        updateUser(pool, userName, {bio: data.response})
+        updateUser(userStorage, userName, {bio: data.response})
     }).catch((err) => {
         console.log("Creating and storing self description failed:"+ err.toString())
     })
 }
 
-export async function authenticateUser(pool: Pool, username: string, password: string): Promise<Token> {
-    const secret = await getSecretByUsername(pool, username)
+export async function authenticateUser(userStorage: UserStorage, username: string, password: string): Promise<Token> {
+    const secret = await userStorage.getSecretByUsername(username)
     
     const passwortIsCorrect = await bcrypt.compare(password, secret)
     if (passwortIsCorrect) {
@@ -48,7 +47,7 @@ export async function authenticateUser(pool: Pool, username: string, password: s
     throw new UnauthorizedError('incorrect password')
 }
 
-export async function updateUser(pool: Pool, username: string, update:
+export async function updateUser(userStorage: UserStorage, username: string, update:
     { displayName?: string, iconId?: string, password?: string, bio?: string }
 ) {
     const updates = []
@@ -82,17 +81,13 @@ export async function updateUser(pool: Pool, username: string, update:
         })
     }
     
-    return updateUserRecord(pool, username, updates)
+    return userStorage.updateUserRecord(username, updates)
 }
 
-export async function getUser(pool: Pool, username: string): Promise<UserMeta> {
-    const userDetails = await getUserByUsername(pool, username)
-    const followers = await getFollowersForUser(pool, username)
+export async function getUser(userStorage: UserStorage, username: string): Promise<UserMeta> {
+    const userDetails = await userStorage.getUserByUsername(username)
+    const followers = await userStorage.getFollowersForUser(username)
     return {...userDetails, followers }
-}
-
-export async function searchUsers(pool: Pool, search: string): Promise<User[]> {
-    return getUsersLike(pool, search)
 }
 
 async function hashPassword(password: string): Promise<string> {

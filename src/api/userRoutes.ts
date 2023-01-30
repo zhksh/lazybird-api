@@ -4,8 +4,9 @@ import {pool, sendMappedError} from './common';
 import {BadRequestError, ForbiddenError} from '../errors';
 import {authenticate} from './middleware';
 import {Maybe} from 'monet';
-import {deleteFollowerRelation, getUsersLike, storeFollowerRelation} from '../data/userStorage';
+import {PostgresUserStorage, UserStorage} from '../data/userStorage';
 
+const userStorage: UserStorage = new PostgresUserStorage(pool)
 
 /**
  * Defines all routes necessary for authorization. 
@@ -37,7 +38,7 @@ authRouter.post('/', async (req: Request, res: Response) => {
     bio: body.bio,
   }
 
-  createUser(pool, details,  body.options, body.password)
+  createUser(userStorage, details,  body.options, body.password)
   .then(token => {
     res.json(token)
   })
@@ -56,7 +57,7 @@ authRouter.post('/auth', async (req: Request, res: Response) => {
     return
   }
 
-  authenticateUser(pool, body.username, body.password)
+  authenticateUser(userStorage, body.username, body.password)
   .then(token => {
     res.json(token)
   })
@@ -69,7 +70,7 @@ authRouter.post('/auth', async (req: Request, res: Response) => {
 userRouter.get('/:username', async (req: Request, res: Response) => {
   const username = (req.params.username === 'me') ? req.body.username : req.params.username
   
-  getUser(pool, username)
+  getUser(userStorage, username)
     .then(user => res.json(user))
     .catch(err => sendMappedError(res, err))
 })
@@ -85,7 +86,7 @@ userRouter.post('/:username', async (req: Request, res: Response) => {
     return
   }
 
-  updateUser(pool, username, req.body)
+  updateUser(userStorage, username, req.body)
     .then(() => res.sendStatus(200))
     .catch(err => sendMappedError(res, err))
 })
@@ -102,7 +103,7 @@ userRouter.post('/:username/follow', async (req: Request, res: Response) => {
     return
   }
 
-  storeFollowerRelation(pool, username, followsUsername)
+  userStorage.storeFollowerRelation(username, followsUsername)
     .then(() => res.sendStatus(200))
     .catch(err => sendMappedError(res, err))
 })
@@ -114,7 +115,7 @@ userRouter.post('/:username/follow', async (req: Request, res: Response) => {
   const username = req.body.username
   const followsUsername = req.params.username
   
-  deleteFollowerRelation(pool, username, followsUsername)
+  userStorage.deleteFollowerRelation(username, followsUsername)
     .then(() => res.sendStatus(200))
     .catch(err => sendMappedError(res, err))
 })
@@ -128,7 +129,7 @@ userRouter.get('/', async (req: Request, res: Response) => {
     sendMappedError(res, new BadRequestError('search parameter must not be empty'))
   }
 
-  getUsersLike(pool, search)
+  userStorage.getUsersLike(search)
     .then(users => res.json({ users }))
     .catch(err => sendMappedError(res, err))
 })
