@@ -14,7 +14,7 @@ services:
       - backend
     restart: always
     ports:
-      - ${POSTGRES_PORT}:5432 # TODO: Don't forward port in production
+      - ${POSTGRES_PORT}:5432 # Don't forward port in production, only use for convenience in development
 
   api:
     image: ${IMAGE_NAME}:${IMAGE_VERSION}

@@ -43,8 +43,8 @@ async function storeSelfDescpription(userStorage: UserStorage, options: {tempera
 export async function authenticateUser(userStorage: UserStorage, username: string, password: string): Promise<Token> {
     const secret = await userStorage.getSecretByUsername(username)
     
-    const passwortIsCorrect = await bcrypt.compare(password, secret)
-    if (passwortIsCorrect) {
+    const passwordIsCorrect = await bcrypt.compare(password, secret)
+    if (passwordIsCorrect) {
         return encodeJWT({username: username}).toPromise()
     }
 

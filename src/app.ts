@@ -11,8 +11,11 @@ import { closePostgresPool } from './api/dependencies'
 const app = express()
 
 app.use(express.json())
-app.use(logRequest)
+
+// Mount authRouter before logs, otherwise sensitive data might be logged!
 app.use('/users', authRouter)
+
+app.use(logRequest)
 app.use('/users', userRouter)
 app.use('/posts', postsRouter)
 app.use('/generate', backendRouter)
